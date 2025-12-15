@@ -95,6 +95,31 @@ FINAM_HTTP_USER_AGENT=finam-sdk-laravel
 
 > Примечание: конкретный формат авторизации (например, `Bearer <token>`) и точный base url должны соответствовать требованиям Finam Trade API. Если формат отличается — правится в транспортном слое клиента.
 
+### Аутентификация
+
+SDK поддерживает два драйвера авторизации, управляется через `FINAM_AUTH_DRIVER`:
+
+* `token` — статический токен (по умолчанию). Использует `FINAM_TOKEN` для формирования заголовка авторизации;
+* `oauth` — получение `access_token` через Auth Service (`client_credentials`), кэширование `access_token` через кеш Laravel для уменьшения обращений к Auth API.
+
+Пример конфигурации для OAuth-драйвера в `.env`:
+
+```dotenv
+FINAM_AUTH_DRIVER=oauth
+
+FINAM_AUTH_BASE_URL=https://trade-api.finam.ru
+FINAM_AUTH_TOKEN_ENDPOINT=/auth/oauth2/v1/token
+FINAM_AUTH_CLIENT_ID=your_client_id
+FINAM_AUTH_CLIENT_SECRET=your_client_secret
+FINAM_AUTH_GRANT_TYPE=client_credentials
+FINAM_AUTH_SCOPE=""
+
+FINAM_AUTH_CACHE_KEY=finam:auth:access_token
+FINAM_AUTH_CACHE_TTL=300
+```
+
+> Параметры `cache_key` и `cache_ttl` управляют кешированием `access_token` (Redis/array). Если требуется отключить кеш — установи TTL в `0`.
+
 ## Быстрый старт
 
 ### Получить клиента из контейнера Laravel
