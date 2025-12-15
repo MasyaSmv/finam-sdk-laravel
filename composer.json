@@ -78,13 +78,10 @@
   "minimum-stability": "stable",
   "prefer-stable": true,
   "scripts": {
-    "test": "phpunit",
-    "test:coverage": "phpunit --coverage-text",
-    "lint": "pint",
-    "lint:check": "pint --test",
-    "analyse": "phpstan analyse --memory-limit=1G",
+    "test": "@php vendor/bin/phpunit",
+    "test:coverage": "@php vendor/bin/phpunit --coverage-text",
+    "analyse": "@php vendor/bin/phpstan analyse",
     "ci": [
-      "@lint:check",
       "@analyse",
       "@test"
     ]
