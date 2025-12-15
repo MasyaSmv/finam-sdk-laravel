@@ -56,7 +56,15 @@ final class TokenProviderManager
      */
     private function createStaticProvider(): TokenProviderInterface
     {
-        $token = (string) (Arr::get($this->config, 'auth.token.value') ?? Arr::get($this->config, 'token', ''));
+        $tokenFromAuthConfig = Arr::get($this->config, 'auth.token.value');
+        $tokenFallback = Arr::get($this->config, 'token', '');
+
+        // Если auth.token.value не задан или пустой, используем корневой finam.token.
+        // Это позволяет сохранять обратную совместимость с существующими .env,
+        // где установлен только FINAM_TOKEN без секции auth.token.
+        $token = is_string($tokenFromAuthConfig) && $tokenFromAuthConfig !== ''
+            ? $tokenFromAuthConfig
+            : (string) $tokenFallback;
 
         return new StaticTokenProvider($token);
     }
