@@ -1,30 +1,79 @@
+# -----------------------------------------------------------------------------
+# PHP / Composer (library/package)
+# -----------------------------------------------------------------------------
 /vendor/
-node_modules/
-npm-debug.log
-yarn-error.log
+/composer.phar
 
-# Laravel 4 specific
-bootstrap/compiled.php
-app/storage/
+# For libraries, composer.lock is usually not committed
+/composer.lock
 
-# Laravel 5 & Lumen specific
-public/storage
-public/hot
-
-# Laravel 5 & Lumen specific with changed public path
-public_html/storage
-public_html/hot
-
-storage/*.key
+# -----------------------------------------------------------------------------
+# Environment / secrets
+# -----------------------------------------------------------------------------
 .env
-Homestead.yaml
-Homestead.json
-/.vagrant
-.phpunit.result.cache
+.env.*
+!.env.example
 
-/public/build
-/storage/pail
-.env.backup
-.env.production
-.phpactor.json
-auth.json
+# -----------------------------------------------------------------------------
+# PHPUnit / Test artifacts
+# -----------------------------------------------------------------------------
+/.phpunit.result.cache
+/.phpunit.cache/
+/coverage/
+/coverage.xml
+/clover.xml
+/test-results/
+
+# -----------------------------------------------------------------------------
+# Static analysis / linters
+# -----------------------------------------------------------------------------
+/.phpstan.cache/
+/phpstan.neon
+
+# Laravel Pint
+/.pint.cache
+
+# PHP-CS-Fixer
+/.php-cs-fixer.cache
+
+# Psalm
+/.psalm/
+
+# -----------------------------------------------------------------------------
+# Logs / temp
+# -----------------------------------------------------------------------------
+*.log
+/tmp/
+/.cache/
+
+# -----------------------------------------------------------------------------
+# IDEs / Editors
+# -----------------------------------------------------------------------------
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# -----------------------------------------------------------------------------
+# OS files
+# -----------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+Desktop.ini
+
+# -----------------------------------------------------------------------------
+# Node (only if you add docs tooling later)
+# -----------------------------------------------------------------------------
+/node_modules/
+/npm-debug.log*
+/yarn-debug.log*
+/yarn-error.log*
+/pnpm-debug.log*
+
+# -----------------------------------------------------------------------------
+# Build artifacts (if you add them later)
+# -----------------------------------------------------------------------------
+/dist/
+/build/

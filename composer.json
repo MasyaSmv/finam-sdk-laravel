@@ -1,0 +1,92 @@
+{
+  "name": "masyasmv/finam-sdk-laravel",
+  "description": "PHP SDK for Finam Trade API with Laravel integration (REST).",
+  "type": "library",
+  "license": "MIT",
+  "keywords": [
+    "finam",
+    "trade",
+    "trading",
+    "broker",
+    "api",
+    "sdk",
+    "rest",
+    "laravel",
+    "php"
+  ],
+  "homepage": "https://tradeapi.finam.ru/",
+  "support": {
+    "issues": "https://github.com/MasyaSmv/finam-sdk-laravel/issues",
+    "source": "https://github.com/MasyaSmv/finam-sdk-laravel"
+  },
+  "authors": [
+    {
+      "name": "MasyaSmv",
+      "role": "Maintainer"
+    }
+  ],
+  "require": {
+    "php": "^8.0",
+    "illuminate/support": "^8.0",
+    "illuminate/contracts": "^8.0",
+    "guzzlehttp/guzzle": "^7.0",
+    "psr/log": "^1.1 || ^2.0 || ^3.0",
+    "psr/simple-cache": "^1.0 || ^2.0 || ^3.0",
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "orchestra/testbench": "^6.0",
+    "phpunit/phpunit": "^9.5",
+    "mockery/mockery": "^1.6",
+    "phpstan/phpstan": "^1.10"
+  },
+  "autoload": {
+    "psr-4": {
+      "MasyaSmv\\FinamSdk\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "MasyaSmv\\FinamSdk\\Tests\\": "tests/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "MasyaSmv\\FinamSdk\\FinamSdkServiceProvider"
+      ],
+      "aliases": {
+        "Finam": "MasyaSmv\\FinamSdk\\Facades\\Finam"
+      }
+    }
+  },
+  "config": {
+    "sort-packages": true,
+    "optimize-autoloader": true,
+    "preferred-install": {
+      "*": "dist"
+    },
+    "allow-plugins": {
+      "phpstan/extension-installer": true
+    },
+    "audit": {
+      "ignore": [
+        "PKSA-8qx3-n5y5-vvnd"
+      ]
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "scripts": {
+    "test": "phpunit",
+    "test:coverage": "phpunit --coverage-text",
+    "lint": "pint",
+    "lint:check": "pint --test",
+    "analyse": "phpstan analyse --memory-limit=1G",
+    "ci": [
+      "@lint:check",
+      "@analyse",
+      "@test"
+    ]
+  }
+}
