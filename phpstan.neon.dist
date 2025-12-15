@@ -10,8 +10,4 @@ parameters:
     analyse:
       - vendor
 
-  ignoreErrors:
-    -
-      identifier: missingType.iterableValue
-
   reportUnmatchedIgnoredErrors: true

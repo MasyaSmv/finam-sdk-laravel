@@ -4,6 +4,8 @@ namespace MasyaSmv\FinamSdk;
 
 use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\ServiceProvider;
+use MasyaSmv\FinamSdk\Auth\TokenProviderInterface;
+use MasyaSmv\FinamSdk\Auth\TokenProviderManager;
 use MasyaSmv\FinamSdk\Client\FinamClient;
 
 /**
@@ -26,18 +28,40 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
      * Здесь мы:
      *  - мерджим конфиг (чтобы config('finam.*') работал сразу после установки);
      *  - регистрируем FinamClient как singleton, чтобы использовать один объект на запрос/процесс.
+     *
+     * @return void
      */
     public function register(): void
     {
         $this->mergeConfigFrom($this->configPath(), 'finam');
 
+        $this->app->singleton(TokenProviderManager::class, function ($app): TokenProviderManager {
+            /** @var array<string, mixed> $cfg */
+            $cfg = (array) $app['config']->get('finam', []);
+
+            return new TokenProviderManager(
+                config: $cfg,
+                cache: $app->has('cache.store') ? $app->make('cache.store') : null,
+            );
+        });
+
+        $this->app->bind(TokenProviderInterface::class, function ($app): TokenProviderInterface {
+            /** @var TokenProviderManager $manager */
+            $manager = $app->make(TokenProviderManager::class);
+
+            return $manager->driver();
+        });
+
         $this->app->singleton(FinamClient::class, function ($app): FinamClient {
             /** @var array<string, mixed> $cfg */
             $cfg = (array) $app['config']->get('finam', []);
 
+            /** @var TokenProviderInterface $tokenProvider */
+            $tokenProvider = $app->make(TokenProviderInterface::class);
+
             return new FinamClient(
                 baseUrl: (string) ($cfg['base_url'] ?? ''),
-                token: (string) ($cfg['token'] ?? ''),
+                token: $tokenProvider->getToken(),
                 timeout: (float) ($cfg['http']['timeout'] ?? 10.0),
                 connectTimeout: (float) ($cfg['http']['connect_timeout'] ?? 5.0),
                 retries: (int) ($cfg['http']['retries'] ?? 0),
@@ -53,6 +77,8 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
     /**
      * Bootstrap-процессы.
      * Тут публикуем конфиг, чтобы команда vendor:publish могла его скопировать в приложение.
+     *
+     * @return void
      */
     public function boot(): void
     {
@@ -63,10 +89,14 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
 
     /**
      * Laravel может вызывать провайдер только когда нужны предоставляемые сервисы.
+     *
+     * @return array<int, string>
      */
     public function provides(): array
     {
         return [
+            TokenProviderManager::class,
+            TokenProviderInterface::class,
             FinamClient::class,
             'finam.sdk',
         ];
@@ -74,6 +104,8 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
 
     /**
      * Локальный путь до конфига пакета.
+     *
+     * @return string
      */
     private function configPath(): string
     {
