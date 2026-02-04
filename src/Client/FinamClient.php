@@ -28,7 +28,7 @@ final class FinamClient
     private array $resources = [];
 
     public function __construct(
-        private TokenProviderInterface $tokenProvider,
+        TokenProviderInterface|string $tokenProvider,
         private string $baseUrl = self::DEFAULT_BASE_URL,
         private float $timeout = 10.0,
         private float $connectTimeout = 5.0,
@@ -36,6 +36,10 @@ final class FinamClient
         private int $retryDelayMs = 200,
         private string $userAgent = 'finam-sdk-laravel',
     ) {
+        $this->tokenProvider = is_string($tokenProvider)
+            ? new StaticTokenProvider($tokenProvider)
+            : $tokenProvider;
+
         // Guzzle создаём один раз. Authorization будем подставлять на каждый запрос
         // через options['headers'] ниже.
         $this->http = new Guzzle([
@@ -54,6 +58,8 @@ final class FinamClient
         ]);
     }
 
+    private TokenProviderInterface $tokenProvider;
+
     /**
      * Быстрый конструктор для НЕ-Laravel использования.
      * Сохраняем удобство, но внутри всё равно TokenProvider.
@@ -67,6 +73,22 @@ final class FinamClient
     {
         return new self(
             tokenProvider: new StaticTokenProvider($token),
+            baseUrl: $baseUrl ?? self::DEFAULT_BASE_URL,
+        );
+    }
+
+    /**
+     * Алиас для быстрого создания клиента с токеном.
+     *
+     * @param string $token
+     * @param string|null $baseUrl
+     *
+     * @return self
+     */
+    public static function connect(string $token, ?string $baseUrl = null): self
+    {
+        return new self(
+            tokenProvider: $token,
             baseUrl: $baseUrl ?? self::DEFAULT_BASE_URL,
         );
     }
@@ -121,7 +143,7 @@ final class FinamClient
             $attempt++;
 
             // Подставляем актуальный Authorization на каждый запрос.
-            // Это критично для OAuth: токен может обновиться без пересоздания FinamClient.
+            // Токен может обновиться без пересоздания FinamClient.
             $options = $this->withAuthHeader($options);
 
             try {

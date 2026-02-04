@@ -78,47 +78,27 @@ composer update
 
 ## Настройка
 
-Пакет читает настройки из `config('finam.*')`.
+Пакет читает настройки из `config('finam.*')` и **не использует `.env`**. Передавай значения напрямую через конфиг или конструкторы.
 
-Рекомендуемый минимум в `.env`:
+Пример `config/finam.php`:
 
-```dotenv
-FINAM_BASE_URL=https://trade-api.finam.ru
-FINAM_TOKEN=your_token_here
+```php
+return [
+    'base_url' => 'https://trade-api.finam.ru',
+    'token' => 'your_token_here',
 
-FINAM_HTTP_TIMEOUT=10
-FINAM_HTTP_CONNECT_TIMEOUT=5
-FINAM_HTTP_RETRIES=0
-FINAM_HTTP_RETRY_DELAY_MS=200
-FINAM_HTTP_USER_AGENT=finam-sdk-laravel
+    'http' => [
+        'timeout' => 10.0,
+        'connect_timeout' => 5.0,
+        'retries' => 0,
+        'retry_delay_ms' => 200,
+        'user_agent' => 'finam-sdk-laravel',
+    ],
+];
 ```
 
 > Примечание: конкретный формат авторизации (например, `Bearer <token>`) и точный base url должны соответствовать требованиям Finam Trade API. Если формат отличается — правится в транспортном слое клиента.
 
-### Аутентификация
-
-SDK поддерживает два драйвера авторизации, управляется через `FINAM_AUTH_DRIVER`:
-
-* `token` — статический токен (по умолчанию). Использует `FINAM_TOKEN` для формирования заголовка авторизации;
-* `oauth` — получение `access_token` через Auth Service (`client_credentials`), кэширование `access_token` через кеш Laravel для уменьшения обращений к Auth API.
-
-Пример конфигурации для OAuth-драйвера в `.env`:
-
-```dotenv
-FINAM_AUTH_DRIVER=oauth
-
-FINAM_AUTH_BASE_URL=https://trade-api.finam.ru
-FINAM_AUTH_TOKEN_ENDPOINT=/auth/oauth2/v1/token
-FINAM_AUTH_CLIENT_ID=your_client_id
-FINAM_AUTH_CLIENT_SECRET=your_client_secret
-FINAM_AUTH_GRANT_TYPE=client_credentials
-FINAM_AUTH_SCOPE=""
-
-FINAM_AUTH_CACHE_KEY=finam:auth:access_token
-FINAM_AUTH_CACHE_TTL=300
-```
-
-> Параметры `cache_key` и `cache_ttl` управляют кешированием `access_token` (Redis/array). Если требуется отключить кеш — установи TTL в `0`.
 
 ## Быстрый старт
 
@@ -126,6 +106,7 @@ FINAM_AUTH_CACHE_TTL=300
 
 ```php
 use MasyaSmv\FinamSdk\Client\FinamClient;
+use MasyaSmv\FinamSdk\Client\FinamClientFactory;
 
 $client = app(FinamClient::class);
 
@@ -140,6 +121,29 @@ $response = $client->post('/some/endpoint', [
 ]);
 
 $body = (string) $response->getBody();
+```
+
+### Динамическая подстановка токенов (без singleton)
+
+Если нужно использовать разные токены (например, в цикле), пользуйся фабрикой:
+
+```php
+/** @var FinamClientFactory $factory */
+$factory = app(FinamClientFactory::class);
+
+$client = $factory->withToken($token);
+
+// Далее обычные запросы через $client
+```
+
+### Упрощённый вариант (как в примере)
+
+```php
+use MasyaSmv\FinamSdk\Client\FinamClient;
+
+$client = new FinamClient($token);
+// или
+$client = FinamClient::connect($token);
 ```
 
 ### Через алиас контейнера
