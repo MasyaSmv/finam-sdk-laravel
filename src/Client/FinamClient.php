@@ -85,7 +85,7 @@ final class FinamClient
      *
      * @return self
      */
-    public static function connect(string $token, ?string $baseUrl = null): self
+    public static function connectToken(string $token, ?string $baseUrl = null): self
     {
         return new self(
             tokenProvider: $token,
