@@ -25,17 +25,12 @@ final class ConnectApi implements ConnectApiInterface
      * TokenDetails (Auth Service).
      * По документации: POST /sessions/details и токен передаётся в теле запроса.
      *
-     * @param TokenDetailsRequest $request
-     *
      * @return array<string, mixed>
      */
-    public function tokenDetails(TokenDetailsRequest $request): array
+    public function tokenDetails(): array
     {
-        $token = $request->token() ?? $this->client->getAccessToken();
-
         return $this->client->post('/sessions/details', [
-            // Берём актуальный токен из провайдера.
-            'token' => $token,
+            'token' => $this->client->getAccessToken(),
         ]);
     }
 }
