@@ -4,15 +4,21 @@ declare(strict_types=1);
 
 namespace MasyaSmv\FinamSdk;
 
+use MasyaSmv\FinamSdk\Auth\AuthService;
 use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\ServiceProvider;
 use MasyaSmv\FinamSdk\Auth\StaticTokenProvider;
 use MasyaSmv\FinamSdk\Auth\TokenProviderInterface;
 use MasyaSmv\FinamSdk\Client\FinamClient;
 use MasyaSmv\FinamSdk\Client\FinamClientFactory;
+use MasyaSmv\FinamSdk\Contracts\Api\AuthApiInterface;
+use MasyaSmv\FinamSdk\Contracts\AuthServiceInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamManagerInterface;
 use MasyaSmv\FinamSdk\Dto\Config\FinamConfig;
 use MasyaSmv\FinamSdk\Dto\Config\FinamHttpConfig;
+use MasyaSmv\FinamSdk\Session\Mapper\IssuedTokenMapper;
+use MasyaSmv\FinamSdk\Session\Support\ApiResponseDecoder;
+use MasyaSmv\FinamSdk\Session\Support\ApiValueReader;
 
 final class FinamSdkServiceProvider extends ServiceProvider implements DeferrableProvider
 {
@@ -55,6 +61,18 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
             );
         });
 
+        $this->app->singleton(AuthServiceInterface::class, function ($app): AuthServiceInterface {
+            /** @var FinamClientFactory $factory */
+            $factory = $app->make(FinamClientFactory::class);
+            $reader = new ApiValueReader();
+
+            return new AuthService(
+                authApi: $factory->withToken('')->auth(),
+                decoder: new ApiResponseDecoder($reader),
+                mapper: new IssuedTokenMapper($reader),
+            );
+        });
+
         $this->app->bind(FinamClient::class, function ($app): FinamClient {
             /** @var FinamClientFactory $factory */
             $factory = $app->make(FinamClientFactory::class);
@@ -65,8 +83,10 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
         $this->app->singleton(FinamManagerInterface::class, function ($app): FinamManager {
             /** @var FinamClientFactory $factory */
             $factory = $app->make(FinamClientFactory::class);
+            /** @var AuthServiceInterface $authService */
+            $authService = $app->make(AuthServiceInterface::class);
 
-            return new FinamManager($factory);
+            return new FinamManager($factory, $authService);
         });
 
         $this->app->alias(FinamManagerInterface::class, 'finam');
@@ -89,6 +109,7 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
             TokenProviderInterface::class,
             FinamConfig::class,
             FinamClientFactory::class,
+            AuthServiceInterface::class,
             FinamClient::class,
             FinamManagerInterface::class,
             'finam',

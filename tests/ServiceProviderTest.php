@@ -6,6 +6,7 @@ namespace MasyaSmv\FinamSdk\Tests;
 
 use MasyaSmv\FinamSdk\Client\FinamClient;
 use MasyaSmv\FinamSdk\Auth\TokenProviderInterface;
+use MasyaSmv\FinamSdk\Contracts\AuthServiceInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamManagerInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamSessionInterface;
 use MasyaSmv\FinamSdk\Dto\Config\FinamConfig;
@@ -54,6 +55,13 @@ final class ServiceProviderTest extends TestCase
         $manager = $this->app->make(FinamManagerInterface::class);
 
         $this->assertInstanceOf(FinamManagerInterface::class, $manager);
+    }
+
+    public function test_auth_service_is_bound(): void
+    {
+        $service = $this->app->make(AuthServiceInterface::class);
+
+        $this->assertInstanceOf(AuthServiceInterface::class, $service);
     }
 
     public function test_finam_alias_is_bound(): void

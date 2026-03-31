@@ -8,6 +8,7 @@ use GuzzleHttp\Client as Guzzle;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
 use MasyaSmv\FinamSdk\Api\Account\AccountApi;
+use MasyaSmv\FinamSdk\Api\Auth\AuthApi;
 use MasyaSmv\FinamSdk\Api\Connect\ConnectApi;
 use MasyaSmv\FinamSdk\Api\Instrument\InstrumentApi;
 use MasyaSmv\FinamSdk\Api\Market\MarketApi;
@@ -257,11 +258,14 @@ final class FinamClient
 
         // Если провайдер вернул пусто — лучше не лепить "Bearer ".
         // Пусть API вернёт 401, а мы отдадим нормализованную ошибку.
-        $auth = $token !== '' ? ('Bearer ' . $token) : '';
-
         /** @var array<string, string> $headers */
         $headers = (array)($options['headers'] ?? []);
-        $headers['Authorization'] = $auth;
+
+        if ($token === '') {
+            unset($headers['Authorization']);
+        } else {
+            $headers['Authorization'] = 'Bearer ' . $token;
+        }
 
         $options['headers'] = $headers;
 
@@ -318,6 +322,14 @@ final class FinamClient
     {
         /** @var ConnectApi $api */
         $api = $this->resource(ConnectApi::class);
+
+        return $api;
+    }
+
+    public function auth(): AuthApi
+    {
+        /** @var AuthApi $api */
+        $api = $this->resource(AuthApi::class);
 
         return $api;
     }

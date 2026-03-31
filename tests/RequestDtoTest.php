@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MasyaSmv\FinamSdk\Tests;
 
 use DateTimeImmutable;
+use MasyaSmv\FinamSdk\Dto\Auth\AuthRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\AllAssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\AssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ClockRequest;
@@ -51,6 +52,21 @@ final class RequestDtoTest extends TestCase
         $this->expectException(InvalidRequestException::class);
 
         new AllAssetsRequest(cursor: null, onlyActive: true, onlyDisabled: true);
+    }
+
+    public function testAuthRequestBuildsPayload(): void
+    {
+        $request = new AuthRequest('secret-key');
+
+        $this->assertSame('secret-key', $request->secret());
+        $this->assertSame(['secret' => 'secret-key'], $request->toPayload());
+    }
+
+    public function testAuthRequestRejectsEmptySecret(): void
+    {
+        $this->expectException(InvalidRequestException::class);
+
+        new AuthRequest('');
     }
 
     public function testClockRequestReturnsEmptyQuery(): void

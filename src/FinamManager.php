@@ -6,14 +6,23 @@ namespace MasyaSmv\FinamSdk;
 
 use MasyaSmv\FinamSdk\Client\FinamClient;
 use MasyaSmv\FinamSdk\Client\FinamClientFactory;
+use MasyaSmv\FinamSdk\Contracts\AuthServiceInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamManagerInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamSessionInterface;
+use MasyaSmv\FinamSdk\Dto\Auth\IssuedTokenDto;
 use MasyaSmv\FinamSdk\Session\FinamSession;
 
 final class FinamManager implements FinamManagerInterface
 {
-    public function __construct(private FinamClientFactory $factory)
+    public function __construct(
+        private FinamClientFactory $factory,
+        private AuthServiceInterface $authService,
+    ) {
+    }
+
+    public function issueToken(string $secret): IssuedTokenDto
     {
+        return $this->authService->issueToken($secret);
     }
 
     public function connect(string $token): FinamSessionInterface
