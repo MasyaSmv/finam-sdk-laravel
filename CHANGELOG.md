@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Refined transport integer accessors to normalize numeric strings into a single `int` contract
 - Added API modules (connect/account/instrument/order/market) with DTO-driven request contracts and interfaces
 - Added client factory and flexible token-based construction, including connect() helper
 - Added shared request validation and new InvalidRequestException

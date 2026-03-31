@@ -62,17 +62,17 @@ final class ApiValueReader
         return $value;
     }
 
-    public function requireIntLike(ApiPayload $data, string $field, string $context): int
+    public function requireInt(ApiPayload $data, string $field, string $context): int
     {
-        $value = $data->intLike($field);
+        $value = $data->int($field);
 
         if ($value === null) {
             throw new ResponseMappingException(
-                sprintf('Field "%s" in "%s" must be an integer or integer-like string.', $field, $context),
+                sprintf('Field "%s" in "%s" must be an integer or numeric string.', $field, $context),
             );
         }
 
-        return (int) $value;
+        return $value;
     }
 
     public function optionalInt(ApiPayload $data, string $field): ?int

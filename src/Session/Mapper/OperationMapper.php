@@ -60,7 +60,7 @@ final class OperationMapper
         return new MoneyDto(
             currencyCode: $this->reader->requireString($value, 'currency_code'),
             units: $this->reader->requireString($value, 'units'),
-            nanos: $this->reader->requireIntLike($value, 'nanos', $field),
+            nanos: $this->reader->requireInt($value, 'nanos', $field),
         );
     }
 }

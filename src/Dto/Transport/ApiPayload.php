@@ -45,18 +45,15 @@ final class ApiPayload
     {
         $value = $this->values[$field] ?? null;
 
-        return is_int($value) ? $value : null;
-    }
+        if (is_int($value)) {
+            return $value;
+        }
 
-    public function intLike(string $field): int|string|null
-    {
-        $value = $this->values[$field] ?? null;
-
-        if (!is_int($value) && !is_string($value)) {
+        if (!is_string($value) || preg_match('/^-?\d+$/', $value) !== 1) {
             return null;
         }
 
-        return $value;
+        return (int) $value;
     }
 
     public function object(string $field): ?self
