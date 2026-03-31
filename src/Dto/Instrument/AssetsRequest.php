@@ -6,18 +6,15 @@ namespace MasyaSmv\FinamSdk\Dto\Instrument;
 
 final class AssetsRequest
 {
-    /**
-     * @param array<string, mixed> $query
-     */
-    public function __construct(private array $query = [])
+    public function __construct()
     {
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<never, never>
      */
     public function toQuery(): array
     {
-        return $this->query;
+        return [];
     }
 }

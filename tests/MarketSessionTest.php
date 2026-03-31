@@ -39,14 +39,12 @@ final class MarketSessionTest extends TestCase
                     'ok' => true,
                     'status' => 200,
                     'data' => [
-                        'quotes' => [
-                            [
-                                'symbol' => 'SBER@MISX',
-                                'price' => ['value' => '250.10'],
-                                'change' => ['value' => '1.20'],
-                                'change_percent' => ['value' => '0.48'],
-                                'timestamp' => '2026-03-31T12:00:00+03:00',
-                            ],
+                        'symbol' => 'SBER@MISX',
+                        'quote' => [
+                            'symbol' => 'SBER@MISX',
+                            'last' => ['value' => '250.10'],
+                            'change' => ['value' => '1.20'],
+                            'timestamp' => '2026-03-31T12:00:00+03:00',
                         ],
                     ],
                     'error' => null,
@@ -86,7 +84,8 @@ final class MarketSessionTest extends TestCase
                     'ok' => true,
                     'status' => 200,
                     'data' => [
-                        'candles' => [
+                        'symbol' => 'SBER@MISX',
+                        'bars' => [
                             [
                                 'timestamp' => '2026-03-31T10:00:00+03:00',
                                 'open' => ['value' => '100.0'],

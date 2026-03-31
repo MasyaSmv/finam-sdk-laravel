@@ -6,18 +6,23 @@ namespace MasyaSmv\FinamSdk\Dto\Market;
 
 final class CandlesRequest
 {
-    /**
-     * @param array<string, mixed> $query
-     */
-    public function __construct(private array $query)
+    public function __construct(private CandlesQueryDto $query)
     {
     }
 
+    public function symbol(): string
+    {
+        return $this->query->symbol();
+    }
+
     /**
-     * @return array<string, mixed>
+     * @return array{timeframe: string, interval: array<string, int>}
      */
     public function toQuery(): array
     {
-        return $this->query;
+        return [
+            'timeframe' => $this->query->timeframe(),
+            'interval' => $this->query->interval()->toArray(),
+        ];
     }
 }

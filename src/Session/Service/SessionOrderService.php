@@ -55,7 +55,7 @@ final class SessionOrderService implements SessionOrderServiceInterface
         $response = $this->orderApi->place(
             new PlaceOrderRequest(
                 accountId: $resolvedAccountId,
-                payload: $order->toPayload(),
+                payload: $order,
             ),
         );
         $data = $this->decoder->extractData(

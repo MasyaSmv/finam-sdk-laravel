@@ -6,12 +6,9 @@ namespace MasyaSmv\FinamSdk\Dto\Order;
 
 final class PlaceOrderRequest
 {
-    /**
-     * @param array<string, mixed> $payload
-     */
     public function __construct(
         private string $accountId,
-        private array $payload,
+        private PlaceOrderInputDto $payload,
     )
     {
         if ($this->accountId === '') {
@@ -25,10 +22,10 @@ final class PlaceOrderRequest
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string>
      */
     public function toPayload(): array
     {
-        return $this->payload;
+        return $this->payload->toPayload();
     }
 }

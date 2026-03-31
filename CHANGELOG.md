@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- Reworked weak request DTOs to use typed constructors instead of raw array input for active market, instrument, and order flows
+- Aligned market quote and candle requests with documented Finam REST resource paths
 - Refined transport integer accessors to normalize numeric strings into a single `int` contract
 - Added API modules (connect/account/instrument/order/market) with DTO-driven request contracts and interfaces
 - Added client factory and flexible token-based construction, including connect() helper

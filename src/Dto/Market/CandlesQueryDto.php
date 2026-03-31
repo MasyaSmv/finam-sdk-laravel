@@ -29,6 +29,21 @@ final class CandlesQueryDto
         }
     }
 
+    public function symbol(): string
+    {
+        return $this->symbol;
+    }
+
+    public function timeframe(): string
+    {
+        return $this->timeframe;
+    }
+
+    public function interval(): Interval
+    {
+        return new Interval($this->startDate->getTimestamp(), $this->endDate->getTimestamp());
+    }
+
     /**
      * @return array<string, string|array<string, int>>
      */
@@ -37,7 +52,7 @@ final class CandlesQueryDto
         return [
             'symbol' => $this->symbol,
             'timeframe' => $this->timeframe,
-            'interval' => (new Interval($this->startDate->getTimestamp(), $this->endDate->getTimestamp()))->toArray(),
+            'interval' => $this->interval()->toArray(),
         ];
     }
 }

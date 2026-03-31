@@ -6,12 +6,8 @@ namespace MasyaSmv\FinamSdk\Dto\Order;
 
 final class OrdersRequest
 {
-    /**
-     * @param array<string, mixed> $query
-     */
     public function __construct(
         private string $accountId,
-        private array $query = [],
     )
     {
         if ($this->accountId === '') {
@@ -25,10 +21,10 @@ final class OrdersRequest
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<never, never>
      */
     public function toQuery(): array
     {
-        return $this->query;
+        return [];
     }
 }

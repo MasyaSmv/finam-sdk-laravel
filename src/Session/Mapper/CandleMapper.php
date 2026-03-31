@@ -18,7 +18,7 @@ final class CandleMapper
     {
         $candles = [];
 
-        foreach ($this->reader->requireObjectList($data, 'candles')->payloads() as $candleData) {
+        foreach ($this->reader->requireObjectList($data, 'bars')->payloads() as $candleData) {
             $candles[] = new CandleDto(
                 timestamp: $this->reader->parseDateTime($this->reader->requireString($candleData, 'timestamp'), 'timestamp'),
                 open: $this->reader->requireDecimal($candleData, 'open'),

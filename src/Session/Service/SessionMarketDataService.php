@@ -15,6 +15,7 @@ use MasyaSmv\FinamSdk\Dto\Market\QuotesRequest;
 use MasyaSmv\FinamSdk\Exceptions\InvalidRequestException;
 use MasyaSmv\FinamSdk\Session\Mapper\CandleMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\QuoteMapper;
+
 final class SessionMarketDataService implements SessionMarketDataServiceInterface
 {
     public function __construct(
@@ -31,16 +32,32 @@ final class SessionMarketDataService implements SessionMarketDataServiceInterfac
             throw new InvalidRequestException('Symbols list must not be empty.');
         }
 
-        $response = $this->marketApi->quotes(new QuotesRequest(['symbols' => $symbols]));
-        $data = $this->decoder->extractData($response, 'market/quotes');
+        $quotes = [];
 
-        return $this->quoteMapper->mapCollection($data);
+        foreach ($symbols as $symbol) {
+            if (!is_string($symbol) || $symbol === '') {
+                throw new InvalidRequestException('Each symbol must be a non-empty string.');
+            }
+
+            $response = $this->marketApi->quotes(new QuotesRequest($symbol));
+            $data = $this->decoder->extractData(
+                $response,
+                sprintf('instruments/%s/quotes/latest', $symbol),
+            );
+            $quotes[] = $this->quoteMapper->map($data);
+        }
+
+        /** @var list<\MasyaSmv\FinamSdk\Dto\Market\QuoteDto> $quotes */
+        return $this->quoteMapper->mapCollection($quotes);
     }
 
     public function getCandles(CandlesQueryDto $query): CandleCollection
     {
-        $response = $this->marketApi->candles(new CandlesRequest($query->toQuery()));
-        $data = $this->decoder->extractData($response, 'market/candles');
+        $response = $this->marketApi->candles(new CandlesRequest($query));
+        $data = $this->decoder->extractData(
+            $response,
+            sprintf('instruments/%s/bars', $query->symbol()),
+        );
 
         return $this->candleMapper->mapCollection($data);
     }

@@ -26,7 +26,7 @@ final class MarketApi implements MarketApiInterface
      */
     public function candles(CandlesRequest $request): ApiResponse
     {
-        return $this->client->get('/market/candles', $request->toQuery());
+        return $this->client->get("/instruments/{$request->symbol()}/bars", $request->toQuery());
     }
 
     /**
@@ -34,7 +34,7 @@ final class MarketApi implements MarketApiInterface
      */
     public function quotes(QuotesRequest $request): ApiResponse
     {
-        return $this->client->get('/market/quotes', $request->toQuery());
+        return $this->client->get("/instruments/{$request->symbol()}/quotes/latest", $request->toQuery());
     }
 
     /**
@@ -42,7 +42,7 @@ final class MarketApi implements MarketApiInterface
      */
     public function orderbook(OrderbookRequest $request): ApiResponse
     {
-        return $this->client->get('/market/orderbook', $request->toQuery());
+        return $this->client->get("/instruments/{$request->symbol()}/orderbook", $request->toQuery());
     }
 
     /**
@@ -50,6 +50,6 @@ final class MarketApi implements MarketApiInterface
      */
     public function trades(TradesRequest $request): ApiResponse
     {
-        return $this->client->get('/market/trades', $request->toQuery());
+        return $this->client->get("/instruments/{$request->symbol()}/trades/latest", $request->toQuery());
     }
 }

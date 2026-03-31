@@ -8,27 +8,33 @@ use MasyaSmv\FinamSdk\Collections\QuoteCollection;
 use MasyaSmv\FinamSdk\Dto\Market\QuoteDto;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiPayload;
 use MasyaSmv\FinamSdk\Session\Support\ApiValueReader;
+
 final class QuoteMapper
 {
     public function __construct(private ApiValueReader $reader)
     {
     }
 
-    public function mapCollection(ApiPayload $data): QuoteCollection
+    public function map(ApiPayload $data): QuoteDto
     {
-        $quotes = [];
+        $quoteData = $this->reader->requireObject($data, 'quote');
+        $symbol = $this->reader->optionalString($quoteData, 'symbol')
+            ?? $this->reader->requireString($data, 'symbol');
 
-        foreach ($this->reader->requireObjectList($data, 'quotes')->payloads() as $quoteData) {
-            $quotes[] = new QuoteDto(
-                symbol: $this->reader->requireString($quoteData, 'symbol'),
-                price: $this->reader->optionalDecimal($quoteData, 'price') ?? '0',
-                change: $this->reader->optionalDecimal($quoteData, 'change'),
-                percentChange: $this->reader->optionalDecimal($quoteData, 'change_percent'),
-                timestamp: $this->reader->optionalDateTime($quoteData, 'timestamp'),
-            );
-        }
+        return new QuoteDto(
+            symbol: $symbol,
+            price: $this->reader->optionalDecimal($quoteData, 'last') ?? '0',
+            change: $this->reader->optionalDecimal($quoteData, 'change'),
+            percentChange: null,
+            timestamp: $this->reader->optionalDateTime($quoteData, 'timestamp'),
+        );
+    }
 
-        /** @var list<QuoteDto> $quotes */
+    /**
+     * @param list<QuoteDto> $quotes
+     */
+    public function mapCollection(array $quotes): QuoteCollection
+    {
         return new QuoteCollection($quotes);
     }
 }
