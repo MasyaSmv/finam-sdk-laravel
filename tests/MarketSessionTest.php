@@ -6,13 +6,13 @@ namespace MasyaSmv\FinamSdk\Tests;
 
 use DateTimeImmutable;
 use MasyaSmv\FinamSdk\Collections\CandleCollection;
-use MasyaSmv\FinamSdk\Collections\OrderBookLevelCollection;
 use MasyaSmv\FinamSdk\Collections\QuoteCollection;
 use MasyaSmv\FinamSdk\Collections\TradeCollection;
+use MasyaSmv\FinamSdk\Collections\OrderBookRowCollection;
 use MasyaSmv\FinamSdk\Dto\Market\CandleDto;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
 use MasyaSmv\FinamSdk\Dto\Market\OrderBookDto;
-use MasyaSmv\FinamSdk\Dto\Market\OrderBookLevelDto;
+use MasyaSmv\FinamSdk\Dto\Market\OrderBookRowDto;
 use MasyaSmv\FinamSdk\Dto\Market\QuoteDto;
 use MasyaSmv\FinamSdk\Dto\Market\TradeDto;
 use MasyaSmv\FinamSdk\Session\FinamSession;
@@ -150,16 +150,18 @@ final class MarketSessionTest extends TestCase
                     'data' => [
                         'symbol' => 'SBER@MISX',
                         'orderbook' => [
-                            'bids' => [
+                            'rows' => [
                                 [
                                     'price' => ['value' => '250.10'],
-                                    'quantity' => ['value' => '100'],
+                                    'buy_size' => ['value' => '100'],
+                                    'sell_size' => ['value' => '0'],
+                                    'action' => 'ACTION_ADD',
                                 ],
-                            ],
-                            'asks' => [
                                 [
                                     'price' => ['value' => '250.20'],
-                                    'quantity' => ['value' => '120'],
+                                    'buy_size' => ['value' => '0'],
+                                    'sell_size' => ['value' => '120'],
+                                    'action' => 'ACTION_ADD',
                                 ],
                             ],
                         ],
@@ -172,19 +174,22 @@ final class MarketSessionTest extends TestCase
         );
 
         $orderBook = $session->getOrderBook('SBER@MISX');
-        /** @var OrderBookLevelDto|null $bestBid */
-        $bestBid = $orderBook->bids()->first();
-        /** @var OrderBookLevelDto|null $bestAsk */
-        $bestAsk = $orderBook->asks()->first();
+        /** @var OrderBookRowDto|null $bestBid */
+        $bestBid = $orderBook->buyRows()->first();
+        /** @var OrderBookRowDto|null $bestAsk */
+        $bestAsk = $orderBook->sellRows()->first();
 
         $this->assertInstanceOf(OrderBookDto::class, $orderBook);
-        $this->assertInstanceOf(OrderBookLevelCollection::class, $orderBook->bids());
-        $this->assertInstanceOf(OrderBookLevelCollection::class, $orderBook->asks());
+        $this->assertInstanceOf(OrderBookRowCollection::class, $orderBook->rows());
+        $this->assertInstanceOf(OrderBookRowCollection::class, $orderBook->buyRows());
+        $this->assertInstanceOf(OrderBookRowCollection::class, $orderBook->sellRows());
         $this->assertNotNull($bestBid);
         $this->assertNotNull($bestAsk);
         $this->assertSame('SBER@MISX', $orderBook->symbol());
         $this->assertSame('250.10', $bestBid->price());
+        $this->assertSame('100', $bestBid->buySize());
         $this->assertSame('250.20', $bestAsk->price());
+        $this->assertSame('120', $bestAsk->sellSize());
     }
 
     public function testGetLatestTradesReturnsTypedCollection(): void
@@ -213,7 +218,7 @@ final class MarketSessionTest extends TestCase
                         'trades' => [
                             [
                                 'price' => ['value' => '250.10'],
-                                'quantity' => ['value' => '5'],
+                                'size' => ['value' => '5'],
                                 'timestamp' => '2026-04-01T12:00:00+03:00',
                                 'side' => 'SIDE_BUY',
                             ],
@@ -234,7 +239,7 @@ final class MarketSessionTest extends TestCase
         $this->assertNotNull($firstTrade);
         $this->assertSame('SBER@MISX', $firstTrade->symbol());
         $this->assertSame('250.10', $firstTrade->price());
-        $this->assertSame('5', $firstTrade->quantity());
+        $this->assertSame('5', $firstTrade->size());
         $this->assertSame('SIDE_BUY', $firstTrade->side());
     }
 }

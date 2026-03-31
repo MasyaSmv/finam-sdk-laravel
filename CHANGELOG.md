@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Refined market order book and latest trades DTOs to match documented Finam `rows` and `size` response fields
 - Aligned usage metrics, session details, asset clock, exchanges, get-asset, and schedule contracts with live Finam REST responses
 - Fixed the default Finam REST base URL to use the live `https://tradeapi.finam.ru/v1` host
 - Switched candle requests to the canonical `/bars/` resource path to avoid the live redirect

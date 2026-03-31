@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace MasyaSmv\FinamSdk\Collections;
 
 use Illuminate\Support\Collection;
-use MasyaSmv\FinamSdk\Dto\Market\OrderBookLevelDto;
+use MasyaSmv\FinamSdk\Dto\Market\OrderBookRowDto;
 
-final class OrderBookLevelCollection extends Collection
+final class OrderBookRowCollection extends Collection
 {
     /**
-     * @param list<OrderBookLevelDto> $items
+     * @param list<OrderBookRowDto> $items
      */
     public function __construct(array $items = [])
     {

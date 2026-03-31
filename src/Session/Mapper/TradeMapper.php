@@ -24,7 +24,7 @@ final class TradeMapper
             $items[] = new TradeDto(
                 symbol: $symbol,
                 price: $this->reader->requireDecimal($trade, 'price'),
-                quantity: $this->reader->requireDecimal($trade, 'quantity'),
+                size: $this->reader->requireDecimal($trade, 'size'),
                 timestamp: $this->reader->optionalDateTime($trade, 'timestamp'),
                 side: $this->reader->optionalString($trade, 'side'),
             );

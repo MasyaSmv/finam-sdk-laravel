@@ -11,7 +11,7 @@ final class TradeDto
     public function __construct(
         private string $symbol,
         private string $price,
-        private string $quantity,
+        private string $size,
         private ?DateTimeImmutable $timestamp = null,
         private ?string $side = null,
     ) {
@@ -27,9 +27,9 @@ final class TradeDto
         return $this->price;
     }
 
-    public function quantity(): string
+    public function size(): string
     {
-        return $this->quantity;
+        return $this->size;
     }
 
     public function timestamp(): ?DateTimeImmutable

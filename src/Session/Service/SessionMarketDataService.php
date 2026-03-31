@@ -64,7 +64,7 @@ final class SessionMarketDataService implements SessionMarketDataServiceInterfac
         $response = $this->marketApi->candles(new CandlesRequest($query));
         $data = $this->decoder->extractData(
             $response,
-            sprintf('instruments/%s/bars', $query->symbol()),
+            sprintf('instruments/%s/bars/', $query->symbol()),
         );
 
         return $this->candleMapper->mapCollection($data);

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace MasyaSmv\FinamSdk\Session\Mapper;
 
-use MasyaSmv\FinamSdk\Collections\OrderBookLevelCollection;
 use MasyaSmv\FinamSdk\Dto\Market\OrderBookDto;
-use MasyaSmv\FinamSdk\Dto\Market\OrderBookLevelDto;
+use MasyaSmv\FinamSdk\Collections\OrderBookRowCollection;
+use MasyaSmv\FinamSdk\Dto\Market\OrderBookRowDto;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiPayload;
 use MasyaSmv\FinamSdk\Session\Support\ApiValueReader;
 
@@ -22,23 +22,26 @@ final class OrderBookMapper
 
         return new OrderBookDto(
             symbol: $this->reader->requireString($data, 'symbol'),
-            bids: $this->mapLevels($this->reader->requireObjectList($orderBook, 'bids')),
-            asks: $this->mapLevels($this->reader->requireObjectList($orderBook, 'asks')),
+            rows: $this->mapRows($this->reader->requireObjectList($orderBook, 'rows')),
         );
     }
 
-    private function mapLevels(\MasyaSmv\FinamSdk\Collections\Transport\ApiPayloadCollection $levels): OrderBookLevelCollection
+    private function mapRows(\MasyaSmv\FinamSdk\Collections\Transport\ApiPayloadCollection $rows): OrderBookRowCollection
     {
         $items = [];
 
-        foreach ($levels->payloads() as $level) {
-            $items[] = new OrderBookLevelDto(
-                price: $this->reader->requireDecimal($level, 'price'),
-                quantity: $this->reader->requireDecimal($level, 'quantity'),
+        foreach ($rows->payloads() as $row) {
+            $items[] = new OrderBookRowDto(
+                price: $this->reader->requireDecimal($row, 'price'),
+                sellSize: $this->reader->requireDecimal($row, 'sell_size'),
+                buySize: $this->reader->requireDecimal($row, 'buy_size'),
+                action: $this->reader->optionalString($row, 'action'),
+                mpid: $this->reader->optionalString($row, 'mpid'),
+                timestamp: $this->reader->optionalDateTime($row, 'timestamp'),
             );
         }
 
-        /** @var list<OrderBookLevelDto> $items */
-        return new OrderBookLevelCollection($items);
+        /** @var list<OrderBookRowDto> $items */
+        return new OrderBookRowCollection($items);
     }
 }
