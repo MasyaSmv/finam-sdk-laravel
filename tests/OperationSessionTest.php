@@ -14,14 +14,15 @@ use MasyaSmv\FinamSdk\Tests\Support\ConnectApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\InstrumentApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\MarketApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\OrderApiStub;
+use MasyaSmv\FinamSdk\Tests\Support\TestApiResponseFactory;
 
 final class OperationSessionTest extends TestCase
 {
     public function testGetOperationsByDateReturnsTypedCollection(): void
     {
         $session = FinamSession::fromApis(
-            connectApi: new ConnectApiStub([]),
-            accountApi: new AccountApiStub([
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([
                 'ok' => true,
                 'status' => 200,
                 'data' => [
@@ -63,10 +64,20 @@ final class OperationSessionTest extends TestCase
                 ],
                 'error' => null,
                 'meta' => [],
-            ]),
-            orderApi: new OrderApiStub([], [], []),
-            instrumentApi: new InstrumentApiStub([], []),
-            marketApi: new MarketApiStub([], []),
+            ])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
         );
 
         $operations = $session->getOperationsByDate(
@@ -97,7 +108,7 @@ final class OperationSessionTest extends TestCase
     public function testGetOperationsByDateResolvesSingleAccountFromSession(): void
     {
         $session = FinamSession::fromApis(
-            connectApi: new ConnectApiStub([
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([
                 'ok' => true,
                 'status' => 200,
                 'data' => [
@@ -108,8 +119,8 @@ final class OperationSessionTest extends TestCase
                 ],
                 'error' => null,
                 'meta' => [],
-            ]),
-            accountApi: new AccountApiStub([
+            ])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([
                 'ok' => true,
                 'status' => 200,
                 'data' => [
@@ -117,10 +128,20 @@ final class OperationSessionTest extends TestCase
                 ],
                 'error' => null,
                 'meta' => [],
-            ]),
-            orderApi: new OrderApiStub([], [], []),
-            instrumentApi: new InstrumentApiStub([], []),
-            marketApi: new MarketApiStub([], []),
+            ])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
         );
 
         $operations = $session->getOperationsByDate(
@@ -134,7 +155,7 @@ final class OperationSessionTest extends TestCase
     public function testGetOperationsByDateThrowsForAmbiguousAccount(): void
     {
         $session = FinamSession::fromApis(
-            connectApi: new ConnectApiStub([
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([
                 'ok' => true,
                 'status' => 200,
                 'data' => [
@@ -145,11 +166,21 @@ final class OperationSessionTest extends TestCase
                 ],
                 'error' => null,
                 'meta' => [],
-            ]),
-            accountApi: new AccountApiStub([]),
-            orderApi: new OrderApiStub([], [], []),
-            instrumentApi: new InstrumentApiStub([], []),
-            marketApi: new MarketApiStub([], []),
+            ])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
         );
 
         $this->expectException(AccountResolutionException::class);

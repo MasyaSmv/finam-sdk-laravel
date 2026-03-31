@@ -8,26 +8,15 @@ use MasyaSmv\FinamSdk\Dto\Market\CandlesRequest;
 use MasyaSmv\FinamSdk\Dto\Market\OrderbookRequest;
 use MasyaSmv\FinamSdk\Dto\Market\QuotesRequest;
 use MasyaSmv\FinamSdk\Dto\Market\TradesRequest;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 
 interface MarketApiInterface
 {
-    /**
-     * @return array<string, mixed>
-     */
-    public function candles(CandlesRequest $request): array;
+    public function candles(CandlesRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function quotes(QuotesRequest $request): array;
+    public function quotes(QuotesRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function orderbook(OrderbookRequest $request): array;
+    public function orderbook(OrderbookRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function trades(TradesRequest $request): array;
+    public function trades(TradesRequest $request): ApiResponse;
 }

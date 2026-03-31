@@ -5,16 +5,14 @@ declare(strict_types=1);
 namespace MasyaSmv\FinamSdk\Dto\Connect;
 
 use DateTimeImmutable;
+use MasyaSmv\FinamSdk\Collections\StringCollection;
 
 final class SessionDetailsDto
 {
-    /**
-     * @param list<string> $accountIds
-     */
     public function __construct(
         private DateTimeImmutable $createdAt,
         private DateTimeImmutable $expiresAt,
-        private array $accountIds,
+        private StringCollection $accountIds,
         private bool $readonly,
     ) {
     }
@@ -29,10 +27,7 @@ final class SessionDetailsDto
         return $this->expiresAt;
     }
 
-    /**
-     * @return list<string>
-     */
-    public function accountIds(): array
+    public function accountIds(): StringCollection
     {
         return $this->accountIds;
     }

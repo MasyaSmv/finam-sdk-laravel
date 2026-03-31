@@ -14,11 +14,6 @@ use MasyaSmv\FinamSdk\Dto\Account\TransactionsRequest;
 use MasyaSmv\FinamSdk\Dto\Shared\Interval;
 use MasyaSmv\FinamSdk\Exceptions\InvalidRequestException;
 use MasyaSmv\FinamSdk\Session\Mapper\OperationMapper;
-
-/**
- * @phpstan-import-type ApiResponse from \MasyaSmv\FinamSdk\Session\Support\ApiValueReader
- * @psalm-import-type ApiResponse from \MasyaSmv\FinamSdk\Session\Support\ApiValueReader
- */
 final class SessionOperationService implements SessionOperationServiceInterface
 {
     public function __construct(
@@ -40,7 +35,6 @@ final class SessionOperationService implements SessionOperationServiceInterface
         }
 
         $resolvedAccountId = $accountId ?? $this->accountResolver->resolveDefaultAccountId();
-        /** @var ApiResponse $response */
         $response = $this->accountApi->transactions(
             new TransactionsRequest(
                 accountId: $resolvedAccountId,

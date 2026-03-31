@@ -9,31 +9,17 @@ use MasyaSmv\FinamSdk\Dto\Order\OrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrdersRequest;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\ReplaceOrderRequest;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 
 interface OrderApiInterface
 {
-    /**
-     * @return array<string, mixed>
-     */
-    public function orders(OrdersRequest $request): array;
+    public function orders(OrdersRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function order(OrderRequest $request): array;
+    public function order(OrderRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function place(PlaceOrderRequest $request): array;
+    public function place(PlaceOrderRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function cancel(CancelOrderRequest $request): array;
+    public function cancel(CancelOrderRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function replace(ReplaceOrderRequest $request): array;
+    public function replace(ReplaceOrderRequest $request): ApiResponse;
 }

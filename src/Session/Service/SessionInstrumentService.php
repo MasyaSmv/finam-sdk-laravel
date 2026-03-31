@@ -12,11 +12,6 @@ use MasyaSmv\FinamSdk\Dto\Instrument\AssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\InstrumentDto;
 use MasyaSmv\FinamSdk\Session\Mapper\InstrumentMapper;
-
-/**
- * @phpstan-import-type ApiResponse from \MasyaSmv\FinamSdk\Session\Support\ApiValueReader
- * @psalm-import-type ApiResponse from \MasyaSmv\FinamSdk\Session\Support\ApiValueReader
- */
 final class SessionInstrumentService implements SessionInstrumentServiceInterface
 {
     public function __construct(
@@ -28,7 +23,6 @@ final class SessionInstrumentService implements SessionInstrumentServiceInterfac
 
     public function getInstruments(): InstrumentCollection
     {
-        /** @var ApiResponse $response */
         $response = $this->instrumentApi->assets(new AssetsRequest());
         $data = $this->decoder->extractData($response, 'assets');
 
@@ -37,7 +31,6 @@ final class SessionInstrumentService implements SessionInstrumentServiceInterfac
 
     public function getInstrument(string $symbol, ?string $accountId = null): InstrumentDto
     {
-        /** @var ApiResponse $response */
         $response = $this->instrumentApi->asset(new GetAssetRequest($symbol, $accountId));
         $data = $this->decoder->extractData($response, 'assets/asset');
 

@@ -5,69 +5,52 @@ declare(strict_types=1);
 namespace MasyaSmv\FinamSdk\Session\Support;
 
 use MasyaSmv\FinamSdk\Contracts\Session\ApiResponseDecoderInterface;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiHeaders;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiPayload;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 use MasyaSmv\FinamSdk\Exceptions\ApiHttpException;
 use MasyaSmv\FinamSdk\Exceptions\InvalidResponseException;
 
-/**
- * @phpstan-import-type ApiMap from ApiValueReader
- * @phpstan-import-type ApiResponse from ApiValueReader
- * @psalm-import-type ApiMap from ApiValueReader
- * @psalm-import-type ApiResponse from ApiValueReader
- */
 final class ApiResponseDecoder implements ApiResponseDecoderInterface
 {
     public function __construct(private ApiValueReader $reader)
     {
     }
 
-    /**
-     * @param ApiResponse $response
-     *
-     * @return ApiMap
-     */
-    public function extractData(array $response, string $endpoint): array
+    public function extractData(ApiResponse $response, string $endpoint): ApiPayload
     {
-        $ok = $response['ok'] ?? null;
-
-        if ($ok !== true) {
-            $status = $this->reader->optionalInt($response, 'status') ?? 0;
-            $headers = $this->reader->headerMap($response['meta']['headers'] ?? null);
-            /** @var ApiMap|null $errorPayload */
-            $errorPayload = is_array($response['error'] ?? null) ? $response['error'] : null;
+        if (!$response->ok()) {
+            $errorPayload = $response->error()?->details();
             $finamMessage = $this->resolveFinamMessage($errorPayload);
             $finamCode = $this->resolveFinamCode($errorPayload);
             $message = $this->resolveApiErrorMessage($endpoint, $errorPayload);
 
             throw new ApiHttpException(
                 message: $message,
-                httpStatus: $status,
+                httpStatus: $response->status(),
                 endpoint: $endpoint,
-                requestId: $this->resolveRequestId($headers, $errorPayload),
+                requestId: $this->resolveRequestId($response->meta()->headers(), $errorPayload),
                 finamCode: $finamCode,
                 finamMessage: $finamMessage,
                 requestContext: $this->reader->requestContext($response),
-                headers: $headers,
+                headers: $response->meta()->headers(),
                 errorPayload: $errorPayload,
-                rawBody: $this->reader->optionalString($errorPayload ?? [], 'raw'),
+                rawBody: $response->error()?->raw(),
             );
         }
 
-        $data = $response['data'] ?? null;
+        $data = $response->data();
 
-        if (!is_array($data)) {
+        if ($data === null) {
             throw new InvalidResponseException(
                 sprintf('Response data for endpoint "%s" must be an object.', $endpoint),
             );
         }
 
-        /** @var ApiMap $data */
         return $data;
     }
 
-    /**
-     * @param ApiMap|null $errorPayload
-     */
-    private function resolveApiErrorMessage(string $endpoint, ?array $errorPayload): string
+    private function resolveApiErrorMessage(string $endpoint, ?ApiPayload $errorPayload): string
     {
         $message = $this->resolveFinamMessage($errorPayload);
 
@@ -84,10 +67,7 @@ final class ApiResponseDecoder implements ApiResponseDecoderInterface
         return sprintf('Finam API request failed for endpoint "%s".', $endpoint);
     }
 
-    /**
-     * @param ApiMap|null $errorPayload
-     */
-    private function resolveFinamMessage(?array $errorPayload): ?string
+    private function resolveFinamMessage(?ApiPayload $errorPayload): ?string
     {
         if ($errorPayload === null) {
             return null;
@@ -96,10 +76,7 @@ final class ApiResponseDecoder implements ApiResponseDecoderInterface
         return $this->reader->firstStringByKeys($errorPayload, ['message', 'error', 'description', 'detail']);
     }
 
-    /**
-     * @param ApiMap|null $errorPayload
-     */
-    private function resolveFinamCode(?array $errorPayload): ?string
+    private function resolveFinamCode(?ApiPayload $errorPayload): ?string
     {
         if ($errorPayload === null) {
             return null;
@@ -108,13 +85,12 @@ final class ApiResponseDecoder implements ApiResponseDecoderInterface
         return $this->reader->firstStringByKeys($errorPayload, ['code', 'error_code']);
     }
 
-    /**
-     * @param array<string, list<string>> $headers
-     * @param ApiMap|null $errorPayload
-     */
-    private function resolveRequestId(array $headers, ?array $errorPayload): ?string
+    private function resolveRequestId(ApiHeaders $headers, ?ApiPayload $errorPayload): ?string
     {
-        $requestId = $this->reader->firstHeaderValueByNames($headers, ['x-request-id', 'x-correlation-id', 'request-id']);
+        $requestId = $this->reader->firstHeaderValueByNames(
+            $headers,
+            ['x-request-id', 'x-correlation-id', 'request-id'],
+        );
 
         if ($requestId !== null) {
             return $requestId;

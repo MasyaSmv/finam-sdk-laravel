@@ -15,11 +15,6 @@ use MasyaSmv\FinamSdk\Dto\Market\QuotesRequest;
 use MasyaSmv\FinamSdk\Exceptions\InvalidRequestException;
 use MasyaSmv\FinamSdk\Session\Mapper\CandleMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\QuoteMapper;
-
-/**
- * @phpstan-import-type ApiResponse from \MasyaSmv\FinamSdk\Session\Support\ApiValueReader
- * @psalm-import-type ApiResponse from \MasyaSmv\FinamSdk\Session\Support\ApiValueReader
- */
 final class SessionMarketDataService implements SessionMarketDataServiceInterface
 {
     public function __construct(
@@ -36,7 +31,6 @@ final class SessionMarketDataService implements SessionMarketDataServiceInterfac
             throw new InvalidRequestException('Symbols list must not be empty.');
         }
 
-        /** @var ApiResponse $response */
         $response = $this->marketApi->quotes(new QuotesRequest(['symbols' => $symbols]));
         $data = $this->decoder->extractData($response, 'market/quotes');
 
@@ -45,7 +39,6 @@ final class SessionMarketDataService implements SessionMarketDataServiceInterfac
 
     public function getCandles(CandlesQueryDto $query): CandleCollection
     {
-        /** @var ApiResponse $response */
         $response = $this->marketApi->candles(new CandlesRequest($query->toQuery()));
         $data = $this->decoder->extractData($response, 'market/candles');
 

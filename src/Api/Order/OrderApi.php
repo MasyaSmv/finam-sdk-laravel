@@ -11,6 +11,7 @@ use MasyaSmv\FinamSdk\Dto\Order\OrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrdersRequest;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\ReplaceOrderRequest;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 
 /**
  * OrderApi — торговые заявки и операции с ними.
@@ -23,48 +24,32 @@ final class OrderApi implements OrderApiInterface
 
     /**
      * Список заявок.
-     *
-     * @param OrdersRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function orders(OrdersRequest $request): array
+    public function orders(OrdersRequest $request): ApiResponse
     {
         return $this->client->get("/accounts/{$request->accountId()}/orders", $request->toQuery());
     }
 
     /**
      * Детали заявки.
-     *
-     * @param OrderRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function order(OrderRequest $request): array
+    public function order(OrderRequest $request): ApiResponse
     {
         return $this->client->get("/accounts/{$request->accountId()}/orders/{$request->orderId()}");
     }
 
     /**
      * Размещение заявки.
-     *
-     * @param PlaceOrderRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function place(PlaceOrderRequest $request): array
+    public function place(PlaceOrderRequest $request): ApiResponse
     {
         return $this->client->post("/accounts/{$request->accountId()}/orders", $request->toPayload());
     }
 
     /**
      * Отмена заявки.
-     *
-     * @param CancelOrderRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function cancel(CancelOrderRequest $request): array
+    public function cancel(CancelOrderRequest $request): ApiResponse
     {
         return $this->client->post(
             "/accounts/{$request->accountId()}/orders/{$request->orderId()}/cancel",
@@ -74,12 +59,8 @@ final class OrderApi implements OrderApiInterface
 
     /**
      * Замена (изменение) заявки.
-     *
-     * @param ReplaceOrderRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function replace(ReplaceOrderRequest $request): array
+    public function replace(ReplaceOrderRequest $request): ApiResponse
     {
         return $this->client->post(
             "/accounts/{$request->accountId()}/orders/{$request->orderId()}/replace",

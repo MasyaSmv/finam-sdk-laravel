@@ -18,16 +18,19 @@ final class SessionAccountResolver implements SessionAccountResolverInterface
     {
         $accountIds = $this->detailsService->sessionDetails()->accountIds();
 
-        if ($accountIds === []) {
+        if ($accountIds->isEmpty()) {
             throw new AccountResolutionException('Session does not contain any account ids.');
         }
 
-        if (count($accountIds) > 1) {
+        if ($accountIds->count() > 1) {
             throw new AccountResolutionException(
                 'Session contains multiple accounts. Pass accountId explicitly to avoid ambiguous routing.',
             );
         }
 
-        return $accountIds[0];
+        /** @var string $accountId */
+        $accountId = $accountIds->first();
+
+        return $accountId;
     }
 }

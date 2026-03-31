@@ -15,11 +15,6 @@ use MasyaSmv\FinamSdk\Dto\Order\OrdersRequest;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderRequest;
 use MasyaSmv\FinamSdk\Session\Mapper\OrderMapper;
-
-/**
- * @phpstan-import-type ApiResponse from \MasyaSmv\FinamSdk\Session\Support\ApiValueReader
- * @psalm-import-type ApiResponse from \MasyaSmv\FinamSdk\Session\Support\ApiValueReader
- */
 final class SessionOrderService implements SessionOrderServiceInterface
 {
     public function __construct(
@@ -33,7 +28,6 @@ final class SessionOrderService implements SessionOrderServiceInterface
     public function getOrders(?string $accountId = null): OrderCollection
     {
         $resolvedAccountId = $accountId ?? $this->accountResolver->resolveDefaultAccountId();
-        /** @var ApiResponse $response */
         $response = $this->orderApi->orders(new OrdersRequest($resolvedAccountId));
         $data = $this->decoder->extractData(
             $response,
@@ -46,7 +40,6 @@ final class SessionOrderService implements SessionOrderServiceInterface
     public function getOrder(string $orderId, ?string $accountId = null): OrderDto
     {
         $resolvedAccountId = $accountId ?? $this->accountResolver->resolveDefaultAccountId();
-        /** @var ApiResponse $response */
         $response = $this->orderApi->order(new OrderRequest($resolvedAccountId, $orderId));
         $data = $this->decoder->extractData(
             $response,
@@ -59,7 +52,6 @@ final class SessionOrderService implements SessionOrderServiceInterface
     public function placeOrder(PlaceOrderInputDto $order, ?string $accountId = null): OrderDto
     {
         $resolvedAccountId = $accountId ?? $this->accountResolver->resolveDefaultAccountId();
-        /** @var ApiResponse $response */
         $response = $this->orderApi->place(
             new PlaceOrderRequest(
                 accountId: $resolvedAccountId,

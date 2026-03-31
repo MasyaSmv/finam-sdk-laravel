@@ -11,13 +11,14 @@ use MasyaSmv\FinamSdk\Tests\Support\ConnectApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\InstrumentApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\MarketApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\OrderApiStub;
+use MasyaSmv\FinamSdk\Tests\Support\TestApiResponseFactory;
 
 final class SessionDetailsTest extends TestCase
 {
     public function testSessionDetailsAreMappedToDto(): void
     {
         $session = FinamSession::fromApis(
-            connectApi: new ConnectApiStub([
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([
                 'ok' => true,
                 'status' => 200,
                 'data' => [
@@ -28,16 +29,26 @@ final class SessionDetailsTest extends TestCase
                 ],
                 'error' => null,
                 'meta' => [],
-            ]),
-            accountApi: new AccountApiStub([]),
-            orderApi: new OrderApiStub([], [], []),
-            instrumentApi: new InstrumentApiStub([], []),
-            marketApi: new MarketApiStub([], []),
+            ])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
         );
 
         $details = $session->sessionDetails();
 
-        $this->assertSame(['ACC-1'], $details->accountIds());
+        $this->assertSame(['ACC-1'], $details->accountIds()->strings());
         $this->assertFalse($details->readonly());
         $this->assertSame('2026-03-31T10:00:00+03:00', $details->createdAt()->format(DATE_ATOM));
         $this->assertSame('2026-03-31T20:00:00+03:00', $details->expiresAt()->format(DATE_ATOM));
@@ -46,7 +57,7 @@ final class SessionDetailsTest extends TestCase
     public function testApiErrorUsesFinamMessageAndCode(): void
     {
         $session = FinamSession::fromApis(
-            connectApi: new ConnectApiStub([
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([
                 'ok' => false,
                 'status' => 403,
                 'data' => null,
@@ -65,11 +76,21 @@ final class SessionDetailsTest extends TestCase
                         'attempt' => 1,
                     ],
                 ],
-            ]),
-            accountApi: new AccountApiStub([]),
-            orderApi: new OrderApiStub([], [], []),
-            instrumentApi: new InstrumentApiStub([], []),
-            marketApi: new MarketApiStub([], []),
+            ])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
         );
 
         try {
@@ -81,7 +102,7 @@ final class SessionDetailsTest extends TestCase
             $this->assertSame('Token is invalid', $exception->finamMessage);
             $this->assertSame('req-403', $exception->requestId);
             $this->assertSame('sessions/details', $exception->endpoint);
-            $this->assertSame('POST', $exception->requestContext['method'] ?? null);
+            $this->assertSame('POST', $exception->requestContext?->method());
         }
     }
 }

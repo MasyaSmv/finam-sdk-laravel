@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace MasyaSmv\FinamSdk\Contracts\Api;
 
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
+
 interface ConnectApiInterface
 {
-    /**
-     * @return array<string, mixed>
-     */
-    public function tokenDetails(): array;
+    public function tokenDetails(): ApiResponse;
 }

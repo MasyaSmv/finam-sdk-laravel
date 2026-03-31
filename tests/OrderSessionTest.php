@@ -13,16 +13,17 @@ use MasyaSmv\FinamSdk\Tests\Support\ConnectApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\InstrumentApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\MarketApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\OrderApiStub;
+use MasyaSmv\FinamSdk\Tests\Support\TestApiResponseFactory;
 
 final class OrderSessionTest extends TestCase
 {
     public function testGetOrdersReturnsTypedCollection(): void
     {
         $session = FinamSession::fromApis(
-            connectApi: new ConnectApiStub([]),
-            accountApi: new AccountApiStub([]),
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
             orderApi: new OrderApiStub(
-                ordersResponse: [
+                ordersResponse: TestApiResponseFactory::fromArray([
                     'ok' => true,
                     'status' => 200,
                     'data' => [
@@ -65,12 +66,18 @@ final class OrderSessionTest extends TestCase
                     ],
                     'error' => null,
                     'meta' => [],
-                ],
-                orderResponse: [],
-                placeResponse: [],
+                ]),
+                orderResponse: TestApiResponseFactory::fromArray([]),
+                placeResponse: TestApiResponseFactory::fromArray([]),
             ),
-            instrumentApi: new InstrumentApiStub([], []),
-            marketApi: new MarketApiStub([], []),
+            instrumentApi: new InstrumentApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
         );
 
         $orders = $session->getOrders('ACC-1');
@@ -87,11 +94,11 @@ final class OrderSessionTest extends TestCase
     public function testGetOrderReturnsDto(): void
     {
         $session = FinamSession::fromApis(
-            connectApi: new ConnectApiStub([]),
-            accountApi: new AccountApiStub([]),
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
             orderApi: new OrderApiStub(
-                ordersResponse: [],
-                orderResponse: [
+                ordersResponse: TestApiResponseFactory::fromArray([]),
+                orderResponse: TestApiResponseFactory::fromArray([
                     'ok' => true,
                     'status' => 200,
                     'data' => [
@@ -110,11 +117,17 @@ final class OrderSessionTest extends TestCase
                     ],
                     'error' => null,
                     'meta' => [],
-                ],
-                placeResponse: [],
+                ]),
+                placeResponse: TestApiResponseFactory::fromArray([]),
             ),
-            instrumentApi: new InstrumentApiStub([], []),
-            marketApi: new MarketApiStub([], []),
+            instrumentApi: new InstrumentApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
         );
 
         $order = $session->getOrder('ORD-10', 'ACC-1');
@@ -127,12 +140,12 @@ final class OrderSessionTest extends TestCase
     public function testPlaceOrderReturnsDto(): void
     {
         $session = FinamSession::fromApis(
-            connectApi: new ConnectApiStub([]),
-            accountApi: new AccountApiStub([]),
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
             orderApi: new OrderApiStub(
-                ordersResponse: [],
-                orderResponse: [],
-                placeResponse: [
+                ordersResponse: TestApiResponseFactory::fromArray([]),
+                orderResponse: TestApiResponseFactory::fromArray([]),
+                placeResponse: TestApiResponseFactory::fromArray([
                     'ok' => true,
                     'status' => 200,
                     'data' => [
@@ -152,10 +165,16 @@ final class OrderSessionTest extends TestCase
                     ],
                     'error' => null,
                     'meta' => [],
-                ],
+                ]),
             ),
-            instrumentApi: new InstrumentApiStub([], []),
-            marketApi: new MarketApiStub([], []),
+            instrumentApi: new InstrumentApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
         );
 
         $order = $session->placeOrder(

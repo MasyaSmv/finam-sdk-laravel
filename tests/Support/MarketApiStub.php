@@ -9,41 +9,33 @@ use MasyaSmv\FinamSdk\Dto\Market\CandlesRequest;
 use MasyaSmv\FinamSdk\Dto\Market\OrderbookRequest;
 use MasyaSmv\FinamSdk\Dto\Market\QuotesRequest;
 use MasyaSmv\FinamSdk\Dto\Market\TradesRequest as MarketTradesRequest;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 
-/**
- * @phpstan-type TestScalar null|bool|int|float|string
- * @phpstan-type TestNestedArray array<int|string, TestScalar|array<int|string, TestScalar|array<int|string, TestScalar|array<int|string, TestScalar>>>>
- * @phpstan-type TestResponse array<string, TestScalar|TestNestedArray>
- */
 final class MarketApiStub implements MarketApiInterface
 {
-    /**
-     * @param TestResponse $quotesResponse
-     * @param TestResponse $candlesResponse
-     */
     public function __construct(
-        private array $quotesResponse,
-        private array $candlesResponse,
+        private ApiResponse $quotesResponse,
+        private ApiResponse $candlesResponse,
     ) {
     }
 
-    public function candles(CandlesRequest $request): array
+    public function candles(CandlesRequest $request): ApiResponse
     {
         return $this->candlesResponse;
     }
 
-    public function quotes(QuotesRequest $request): array
+    public function quotes(QuotesRequest $request): ApiResponse
     {
         return $this->quotesResponse;
     }
 
-    public function orderbook(OrderbookRequest $request): array
+    public function orderbook(OrderbookRequest $request): ApiResponse
     {
-        return [];
+        return TestApiResponseFactory::fromArray([]);
     }
 
-    public function trades(MarketTradesRequest $request): array
+    public function trades(MarketTradesRequest $request): ApiResponse
     {
-        return [];
+        return TestApiResponseFactory::fromArray([]);
     }
 }

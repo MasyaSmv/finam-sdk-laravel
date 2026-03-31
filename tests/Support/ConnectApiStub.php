@@ -5,22 +5,14 @@ declare(strict_types=1);
 namespace MasyaSmv\FinamSdk\Tests\Support;
 
 use MasyaSmv\FinamSdk\Contracts\Api\ConnectApiInterface;
-
-/**
- * @phpstan-type TestScalar null|bool|int|float|string
- * @phpstan-type TestNestedArray array<int|string, TestScalar|array<int|string, TestScalar|array<int|string, TestScalar|array<int|string, TestScalar>>>>
- * @phpstan-type TestResponse array<string, TestScalar|TestNestedArray>
- */
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 final class ConnectApiStub implements ConnectApiInterface
 {
-    /**
-     * @param TestResponse $response
-     */
-    public function __construct(private array $response)
+    public function __construct(private ApiResponse $response)
     {
     }
 
-    public function tokenDetails(): array
+    public function tokenDetails(): ApiResponse
     {
         return $this->response;
     }

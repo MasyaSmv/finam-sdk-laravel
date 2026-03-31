@@ -16,18 +16,26 @@ use MasyaSmv\FinamSdk\Tests\Support\ConnectApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\InstrumentApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\MarketApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\OrderApiStub;
+use MasyaSmv\FinamSdk\Tests\Support\TestApiResponseFactory;
 
 final class MarketSessionTest extends TestCase
 {
     public function testGetLatestQuotesReturnsTypedCollection(): void
     {
         $session = FinamSession::fromApis(
-            connectApi: new ConnectApiStub([]),
-            accountApi: new AccountApiStub([]),
-            orderApi: new OrderApiStub([], [], []),
-            instrumentApi: new InstrumentApiStub([], []),
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
             marketApi: new MarketApiStub(
-                quotesResponse: [
+                quotesResponse: TestApiResponseFactory::fromArray([
                     'ok' => true,
                     'status' => 200,
                     'data' => [
@@ -43,8 +51,8 @@ final class MarketSessionTest extends TestCase
                     ],
                     'error' => null,
                     'meta' => [],
-                ],
-                candlesResponse: [],
+                ]),
+                candlesResponse: TestApiResponseFactory::fromArray([]),
             ),
         );
 
@@ -61,13 +69,20 @@ final class MarketSessionTest extends TestCase
     public function testGetCandlesReturnsTypedCollection(): void
     {
         $session = FinamSession::fromApis(
-            connectApi: new ConnectApiStub([]),
-            accountApi: new AccountApiStub([]),
-            orderApi: new OrderApiStub([], [], []),
-            instrumentApi: new InstrumentApiStub([], []),
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
             marketApi: new MarketApiStub(
-                quotesResponse: [],
-                candlesResponse: [
+                quotesResponse: TestApiResponseFactory::fromArray([]),
+                candlesResponse: TestApiResponseFactory::fromArray([
                     'ok' => true,
                     'status' => 200,
                     'data' => [
@@ -84,7 +99,7 @@ final class MarketSessionTest extends TestCase
                     ],
                     'error' => null,
                     'meta' => [],
-                ],
+                ]),
             ),
         );
 

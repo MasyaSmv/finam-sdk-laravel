@@ -12,56 +12,48 @@ use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetParamsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\OptionsChainRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ScheduleRequest;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 
-/**
- * @phpstan-type TestScalar null|bool|int|float|string
- * @phpstan-type TestNestedArray array<int|string, TestScalar|array<int|string, TestScalar|array<int|string, TestScalar|array<int|string, TestScalar>>>>
- * @phpstan-type TestResponse array<string, TestScalar|TestNestedArray>
- */
 final class InstrumentApiStub implements InstrumentApiInterface
 {
-    /**
-     * @param TestResponse $assetsResponse
-     * @param TestResponse $assetResponse
-     */
     public function __construct(
-        private array $assetsResponse,
-        private array $assetResponse,
+        private ApiResponse $assetsResponse,
+        private ApiResponse $assetResponse,
     ) {
     }
 
-    public function assets(AssetsRequest $request): array
+    public function assets(AssetsRequest $request): ApiResponse
     {
         return $this->assetsResponse;
     }
 
-    public function clock(ClockRequest $request): array
+    public function clock(ClockRequest $request): ApiResponse
     {
-        return [];
+        return TestApiResponseFactory::fromArray([]);
     }
 
-    public function exchanges(ExchangesRequest $request): array
+    public function exchanges(ExchangesRequest $request): ApiResponse
     {
-        return [];
+        return TestApiResponseFactory::fromArray([]);
     }
 
-    public function asset(GetAssetRequest $request): array
+    public function asset(GetAssetRequest $request): ApiResponse
     {
         return $this->assetResponse;
     }
 
-    public function assetParams(GetAssetParamsRequest $request): array
+    public function assetParams(GetAssetParamsRequest $request): ApiResponse
     {
-        return [];
+        return TestApiResponseFactory::fromArray([]);
     }
 
-    public function optionsChain(OptionsChainRequest $request): array
+    public function optionsChain(OptionsChainRequest $request): ApiResponse
     {
-        return [];
+        return TestApiResponseFactory::fromArray([]);
     }
 
-    public function schedule(ScheduleRequest $request): array
+    public function schedule(ScheduleRequest $request): ApiResponse
     {
-        return [];
+        return TestApiResponseFactory::fromArray([]);
     }
 }

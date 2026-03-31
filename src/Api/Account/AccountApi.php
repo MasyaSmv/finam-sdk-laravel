@@ -9,6 +9,7 @@ use MasyaSmv\FinamSdk\Client\FinamClient;
 use MasyaSmv\FinamSdk\Dto\Account\GetAccountRequest;
 use MasyaSmv\FinamSdk\Dto\Account\TradesRequest;
 use MasyaSmv\FinamSdk\Dto\Account\TransactionsRequest;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 
 /**
  * AccountApi — счета, сделки, транзакции, позиции.
@@ -24,12 +25,8 @@ final class AccountApi implements AccountApiInterface
 
     /**
      * Детали счёта.
-     *
-     * @param GetAccountRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function account(GetAccountRequest $request): array
+    public function account(GetAccountRequest $request): ApiResponse
     {
         $accountId = $request->accountId();
 
@@ -38,12 +35,8 @@ final class AccountApi implements AccountApiInterface
 
     /**
      * История сделок по счёту.
-     *
-     * @param TradesRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function trades(TradesRequest $request): array
+    public function trades(TradesRequest $request): ApiResponse
     {
         $accountId = $request->accountId();
 
@@ -52,12 +45,8 @@ final class AccountApi implements AccountApiInterface
 
     /**
      * История транзакций по счёту.
-     *
-     * @param TransactionsRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function transactions(TransactionsRequest $request): array
+    public function transactions(TransactionsRequest $request): ApiResponse
     {
         $accountId = $request->accountId();
 

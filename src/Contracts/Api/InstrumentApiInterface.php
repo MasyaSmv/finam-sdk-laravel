@@ -11,41 +11,21 @@ use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetParamsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\OptionsChainRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ScheduleRequest;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 
 interface InstrumentApiInterface
 {
-    /**
-     * @return array<string, mixed>
-     */
-    public function assets(AssetsRequest $request): array;
+    public function assets(AssetsRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function clock(ClockRequest $request): array;
+    public function clock(ClockRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function exchanges(ExchangesRequest $request): array;
+    public function exchanges(ExchangesRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function asset(GetAssetRequest $request): array;
+    public function asset(GetAssetRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function assetParams(GetAssetParamsRequest $request): array;
+    public function assetParams(GetAssetParamsRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function optionsChain(OptionsChainRequest $request): array;
+    public function optionsChain(OptionsChainRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function schedule(ScheduleRequest $request): array;
+    public function schedule(ScheduleRequest $request): ApiResponse;
 }

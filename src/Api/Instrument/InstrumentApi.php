@@ -13,6 +13,7 @@ use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetParamsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\OptionsChainRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ScheduleRequest;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 
 /**
  * InstrumentApi — инструменты/справочники/поиск тикеров.
@@ -25,84 +26,56 @@ final class InstrumentApi implements InstrumentApiInterface
 
     /**
      * Список инструментов.
-     *
-     * @param AssetsRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function assets(AssetsRequest $request): array
+    public function assets(AssetsRequest $request): ApiResponse
     {
         return $this->client->get('/assets', $request->toQuery());
     }
 
     /**
      * Время на сервере.
-     *
-     * @param ClockRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function clock(ClockRequest $request): array
+    public function clock(ClockRequest $request): ApiResponse
     {
         return $this->client->get('/assets/clock', $request->toQuery());
     }
 
     /**
      * Список бирж.
-     *
-     * @param ExchangesRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function exchanges(ExchangesRequest $request): array
+    public function exchanges(ExchangesRequest $request): ApiResponse
     {
         return $this->client->get('/assets/exchanges', $request->toQuery());
     }
 
     /**
      * Инструмент по символу.
-     *
-     * @param GetAssetRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function asset(GetAssetRequest $request): array
+    public function asset(GetAssetRequest $request): ApiResponse
     {
         return $this->client->get('/assets/asset', $request->toQuery());
     }
 
     /**
      * Торговые параметры инструмента.
-     *
-     * @param GetAssetParamsRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function assetParams(GetAssetParamsRequest $request): array
+    public function assetParams(GetAssetParamsRequest $request): ApiResponse
     {
         return $this->client->get('/assets/asset/params', $request->toQuery());
     }
 
     /**
      * Цепочка опционов.
-     *
-     * @param OptionsChainRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function optionsChain(OptionsChainRequest $request): array
+    public function optionsChain(OptionsChainRequest $request): ApiResponse
     {
         return $this->client->get('/assets/options/chain', $request->toQuery());
     }
 
     /**
      * Расписание торгов по инструменту.
-     *
-     * @param ScheduleRequest $request
-     *
-     * @return array<string, mixed>
      */
-    public function schedule(ScheduleRequest $request): array
+    public function schedule(ScheduleRequest $request): ApiResponse
     {
         return $this->client->get('/assets/schedule', $request->toQuery());
     }

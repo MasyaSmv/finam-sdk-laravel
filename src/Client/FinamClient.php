@@ -14,6 +14,12 @@ use MasyaSmv\FinamSdk\Api\Market\MarketApi;
 use MasyaSmv\FinamSdk\Api\Order\OrderApi;
 use MasyaSmv\FinamSdk\Auth\StaticTokenProvider;
 use MasyaSmv\FinamSdk\Auth\TokenProviderInterface;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiError;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiHeaders;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiMeta;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiPayload;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiRequestContext;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 use MasyaSmv\FinamSdk\Exceptions\ApiRequestFailedException;
 use MasyaSmv\FinamSdk\Exceptions\InvalidResponseException;
 
@@ -105,9 +111,9 @@ final class FinamClient
      *
      * @param array<string, mixed> $query
      *
-     * @return array<string, mixed>
+     * @return ApiResponse
      */
-    public function get(string $uri, array $query = []): array
+    public function get(string $uri, array $query = []): ApiResponse
     {
         return $this->requestJson('GET', $uri, ['query' => $query]);
     }
@@ -117,9 +123,9 @@ final class FinamClient
      *
      * @param array<string, mixed> $payload
      *
-     * @return array<string, mixed>
+     * @return ApiResponse
      */
-    public function post(string $uri, array $payload = []): array
+    public function post(string $uri, array $payload = []): ApiResponse
     {
         return $this->requestJson('POST', $uri, ['json' => $payload]);
     }
@@ -129,9 +135,9 @@ final class FinamClient
      *
      * @param array<string, mixed> $options
      *
-     * @return array<string, mixed>
+     * @return ApiResponse
      */
-    public function requestJson(string $method, string $uri, array $options): array
+    public function requestJson(string $method, string $uri, array $options): ApiResponse
     {
         $attempt = 0;
         $maxAttempts = max(1, $this->retries + 1);
@@ -180,49 +186,30 @@ final class FinamClient
                 $ok = ($status >= 200 && $status < 300) && ($jsonError === null);
 
                 if ($ok) {
-                    return [
-                        'ok' => true,
-                        'status' => $status,
-                        'data' => $data ?? [],
-                        'error' => null,
-                        'meta' => [
-                            'headers' => $headers,
-                            'request' => [
-                                'method' => $method,
-                                'uri' => $uri,
-                                'query' => $options['query'] ?? [],
-                                'payload' => $options['json'] ?? [],
-                                'attempt' => $attempt,
-                            ],
-                        ],
-                    ];
+                    return new ApiResponse(
+                        ok: true,
+                        status: $status,
+                        data: new ApiPayload($data ?? []),
+                        error: null,
+                        meta: $this->meta($headers, $method, $uri, $options, $attempt),
+                    );
                 }
 
-                return [
-                    'ok' => false,
-                    'status' => $status,
-                    'data' => null,
-                    'error' => [
-                        'message' => $jsonError !== null
-                            ? ('Response is not valid JSON: ' . $jsonError)
-                            : ('HTTP error: ' . $status),
-                        'type' => $this->guessErrorType($status, $jsonError),
-                        'details' => $data,
-                        // если сервер вернул JSON с ошибкой — будет здесь
-                        'raw' => $jsonError !== null ? mb_substr($body, 0, 2000) : null,
-                        // если не JSON (HTML) — покажем кусок
-                    ],
-                    'meta' => [
-                        'headers' => $headers,
-                        'request' => [
-                            'method' => $method,
-                            'uri' => $uri,
-                            'query' => $options['query'] ?? [],
-                            'payload' => $options['json'] ?? [],
-                            'attempt' => $attempt,
-                        ],
-                    ],
-                ];
+                $details = is_array($data) ? new ApiPayload($data) : null;
+                $errorMessage = $this->resolveErrorMessage($status, $jsonError, $details);
+
+                return new ApiResponse(
+                    ok: false,
+                    status: $status,
+                    data: null,
+                    error: new ApiError(
+                        message: $errorMessage,
+                        type: $this->guessErrorType($status, $jsonError),
+                        details: $details,
+                        raw: $jsonError !== null ? mb_substr($body, 0, 2000) : null,
+                    ),
+                    meta: $this->meta($headers, $method, $uri, $options, $attempt),
+                );
             } catch (GuzzleException $e) {
                 if ($attempt >= $maxAttempts) {
                     throw new ApiRequestFailedException(
@@ -344,5 +331,43 @@ final class FinamClient
         $api = $this->resource(MarketApi::class);
 
         return $api;
+    }
+
+    /**
+     * @param array<string, list<string>> $headers
+     * @param array<string, mixed> $options
+     */
+    private function meta(array $headers, string $method, string $uri, array $options, int $attempt): ApiMeta
+    {
+        /** @var array<string, scalar|array<int|string, scalar|null>> $query */
+        $query = is_array($options['query'] ?? null) ? $options['query'] : [];
+        /** @var array<string, scalar|array<int|string, scalar|null>> $payload */
+        $payload = is_array($options['json'] ?? null) ? $options['json'] : [];
+
+        return new ApiMeta(
+            headers: new ApiHeaders($headers),
+            request: new ApiRequestContext(
+                method: $method,
+                uri: $uri,
+                query: new ApiPayload($query),
+                payload: new ApiPayload($payload),
+                attempt: $attempt,
+            ),
+        );
+    }
+
+    private function resolveErrorMessage(int $status, ?string $jsonError, ?ApiPayload $details): string
+    {
+        if ($jsonError !== null) {
+            return 'Response is not valid JSON: ' . $jsonError;
+        }
+
+        $message = $details?->firstStringByKeys('message', 'error', 'description', 'detail');
+
+        if ($message !== null) {
+            return $message;
+        }
+
+        return 'HTTP error: ' . $status;
     }
 }

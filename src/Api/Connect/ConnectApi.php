@@ -6,7 +6,7 @@ namespace MasyaSmv\FinamSdk\Api\Connect;
 
 use MasyaSmv\FinamSdk\Contracts\Api\ConnectApiInterface;
 use MasyaSmv\FinamSdk\Client\FinamClient;
-use MasyaSmv\FinamSdk\Dto\Connect\TokenDetailsRequest;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 
 /**
  * ConnectApi — методы, связанные с подключением/сессиями/проверкой токена.
@@ -24,10 +24,8 @@ final class ConnectApi implements ConnectApiInterface
     /**
      * TokenDetails (Auth Service).
      * По документации: POST /sessions/details и токен передаётся в теле запроса.
-     *
-     * @return array<string, mixed>
      */
-    public function tokenDetails(): array
+    public function tokenDetails(): ApiResponse
     {
         return $this->client->post('/sessions/details', [
             'token' => $this->client->getAccessToken(),

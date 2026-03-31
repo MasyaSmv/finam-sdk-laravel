@@ -12,17 +12,22 @@ use MasyaSmv\FinamSdk\Tests\Support\ConnectApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\InstrumentApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\MarketApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\OrderApiStub;
+use MasyaSmv\FinamSdk\Tests\Support\TestApiResponseFactory;
 
 final class InstrumentSessionTest extends TestCase
 {
     public function testGetInstrumentsReturnsTypedCollection(): void
     {
         $session = FinamSession::fromApis(
-            connectApi: new ConnectApiStub([]),
-            accountApi: new AccountApiStub([]),
-            orderApi: new OrderApiStub([], [], []),
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
             instrumentApi: new InstrumentApiStub(
-                assetsResponse: [
+                assetsResponse: TestApiResponseFactory::fromArray([
                     'ok' => true,
                     'status' => 200,
                     'data' => [
@@ -40,10 +45,13 @@ final class InstrumentSessionTest extends TestCase
                     ],
                     'error' => null,
                     'meta' => [],
-                ],
-                assetResponse: [],
+                ]),
+                assetResponse: TestApiResponseFactory::fromArray([]),
             ),
-            marketApi: new MarketApiStub([], []),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
         );
 
         $instruments = $session->getInstruments();
@@ -59,12 +67,16 @@ final class InstrumentSessionTest extends TestCase
     public function testGetInstrumentReturnsDto(): void
     {
         $session = FinamSession::fromApis(
-            connectApi: new ConnectApiStub([]),
-            accountApi: new AccountApiStub([]),
-            orderApi: new OrderApiStub([], [], []),
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
             instrumentApi: new InstrumentApiStub(
-                assetsResponse: [],
-                assetResponse: [
+                assetsResponse: TestApiResponseFactory::fromArray([]),
+                assetResponse: TestApiResponseFactory::fromArray([
                     'ok' => true,
                     'status' => 200,
                     'data' => [
@@ -78,9 +90,12 @@ final class InstrumentSessionTest extends TestCase
                     ],
                     'error' => null,
                     'meta' => [],
-                ],
+                ]),
             ),
-            marketApi: new MarketApiStub([], []),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
         );
 
         $instrument = $session->getInstrument('GAZP@MISX');

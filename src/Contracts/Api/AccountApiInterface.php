@@ -7,21 +7,13 @@ namespace MasyaSmv\FinamSdk\Contracts\Api;
 use MasyaSmv\FinamSdk\Dto\Account\GetAccountRequest;
 use MasyaSmv\FinamSdk\Dto\Account\TradesRequest;
 use MasyaSmv\FinamSdk\Dto\Account\TransactionsRequest;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 
 interface AccountApiInterface
 {
-    /**
-     * @return array<string, mixed>
-     */
-    public function account(GetAccountRequest $request): array;
+    public function account(GetAccountRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function trades(TradesRequest $request): array;
+    public function trades(TradesRequest $request): ApiResponse;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function transactions(TransactionsRequest $request): array;
+    public function transactions(TransactionsRequest $request): ApiResponse;
 }
