@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Refined asset DTO and mapping to match the documented Finam asset model more closely
 - Removed undocumented `ReplaceOrder` contract until Finam REST docs provide a confirmed replacement/update endpoint
 - Switched order cancellation to the documented REST DELETE endpoint and removed the fake cancel payload contract
 - Moved GetAsset symbol to the resource path and kept only optional account context in the query contract

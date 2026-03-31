@@ -33,11 +33,13 @@ final class InstrumentSessionTest extends TestCase
                     'data' => [
                         'assets' => [
                             [
+                                'id' => 'asset-1',
                                 'symbol' => 'SBER@MISX',
-                                'short_name' => 'Sber',
-                                'description' => 'Sberbank',
-                                'market' => 'MISX',
-                                'currency' => 'RUB',
+                                'ticker' => 'SBER',
+                                'mic' => 'MISX',
+                                'type' => 'ASSET_TYPE_STOCK',
+                                'name' => 'Sberbank',
+                                'quote_currency' => 'RUB',
                                 'lot_size' => ['value' => '10'],
                                 'isin' => 'RU0009029540',
                             ],
@@ -60,7 +62,14 @@ final class InstrumentSessionTest extends TestCase
         $firstInstrument = $instruments->first();
 
         $this->assertInstanceOf(InstrumentCollection::class, $instruments);
-        $this->assertSame('SBER@MISX', $firstInstrument?->symbol());
+        $this->assertNotNull($firstInstrument);
+        $this->assertSame('SBER@MISX', $firstInstrument->symbol());
+        $this->assertSame('asset-1', $firstInstrument->id());
+        $this->assertSame('SBER', $firstInstrument->ticker());
+        $this->assertSame('MISX', $firstInstrument->mic());
+        $this->assertSame('ASSET_TYPE_STOCK', $firstInstrument->type());
+        $this->assertSame('Sberbank', $firstInstrument->name());
+        $this->assertSame('RUB', $firstInstrument->quoteCurrency());
         $this->assertSame('SBER@MISX', $instruments->findBySymbol('SBER@MISX')?->symbol());
     }
 
@@ -81,11 +90,17 @@ final class InstrumentSessionTest extends TestCase
                     'status' => 200,
                     'data' => [
                         'asset' => [
+                            'id' => 'asset-2',
                             'symbol' => 'GAZP@MISX',
-                            'short_name' => 'Gazprom',
-                            'description' => 'Gazprom PJSC',
-                            'market' => 'MISX',
-                            'currency' => 'RUB',
+                            'ticker' => 'GAZP',
+                            'mic' => 'MISX',
+                            'type' => 'ASSET_TYPE_STOCK',
+                            'name' => 'Gazprom PJSC',
+                            'board' => 'TQBR',
+                            'decimals' => 2,
+                            'min_step' => ['value' => '0.01'],
+                            'quote_currency' => 'RUB',
+                            'lot_size' => ['value' => '10'],
                         ],
                     ],
                     'error' => null,
@@ -101,6 +116,15 @@ final class InstrumentSessionTest extends TestCase
         $instrument = $session->getInstrument('GAZP@MISX');
 
         $this->assertSame('GAZP@MISX', $instrument->symbol());
-        $this->assertSame('Gazprom', $instrument->shortName());
+        $this->assertSame('asset-2', $instrument->id());
+        $this->assertSame('GAZP', $instrument->ticker());
+        $this->assertSame('MISX', $instrument->mic());
+        $this->assertSame('ASSET_TYPE_STOCK', $instrument->type());
+        $this->assertSame('Gazprom PJSC', $instrument->name());
+        $this->assertSame('TQBR', $instrument->board());
+        $this->assertSame(2, $instrument->decimals());
+        $this->assertSame('0.01', $instrument->minStep());
+        $this->assertSame('RUB', $instrument->quoteCurrency());
+        $this->assertSame('Gazprom PJSC', $instrument->shortName());
     }
 }

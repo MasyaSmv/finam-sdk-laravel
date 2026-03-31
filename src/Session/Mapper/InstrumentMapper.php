@@ -32,12 +32,19 @@ final class InstrumentMapper
 
         return new InstrumentDto(
             symbol: $this->reader->requireString($instrumentData, 'symbol'),
-            shortName: $this->reader->optionalString($instrumentData, 'short_name')
-                ?? $this->reader->optionalString($instrumentData, 'name')
-                ?? $this->reader->requireString($instrumentData, 'symbol'),
-            description: $this->reader->optionalString($instrumentData, 'description'),
-            market: $this->reader->optionalString($instrumentData, 'market'),
-            currency: $this->reader->optionalString($instrumentData, 'currency'),
+            id: $this->reader->optionalString($instrumentData, 'id'),
+            ticker: $this->reader->optionalString($instrumentData, 'ticker'),
+            mic: $this->reader->optionalString($instrumentData, 'mic')
+                ?? $this->reader->optionalString($instrumentData, 'market'),
+            type: $this->reader->optionalString($instrumentData, 'type'),
+            name: $this->reader->optionalString($instrumentData, 'name')
+                ?? $this->reader->optionalString($instrumentData, 'short_name'),
+            board: $this->reader->optionalString($instrumentData, 'board'),
+            decimals: $this->reader->optionalInt($instrumentData, 'decimals'),
+            minStep: $this->reader->optionalDecimal($instrumentData, 'min_step'),
+            quoteCurrency: $this->reader->optionalString($instrumentData, 'quote_currency')
+                ?? $this->reader->optionalString($instrumentData, 'currency'),
+            expirationDate: $this->reader->optionalString($instrumentData, 'expiration_date'),
             lotSize: $this->reader->optionalDecimal($instrumentData, 'lot_size'),
             isin: $this->reader->optionalString($instrumentData, 'isin'),
         );
