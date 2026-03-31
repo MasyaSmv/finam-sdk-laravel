@@ -9,8 +9,11 @@ namespace MasyaSmv\FinamSdk\Exceptions;
  * Хранит статус, заголовки и распарсенный payload ошибки (если был JSON).
  *
  * @phpstan-type ApiScalar null|bool|int|float|string
- * @phpstan-type ApiNestedArray array<int|string, ApiScalar|array<int|string, ApiScalar>>
+ * @phpstan-type ApiNestedArray array<int|string, ApiScalar|array<int|string, ApiScalar|array<int|string, ApiScalar>>>
  * @phpstan-type ApiMap array<int|string, ApiScalar|ApiNestedArray>
+ * @psalm-type ApiScalar = null|bool|int|float|string
+ * @psalm-type ApiNestedArray = array<int|string, ApiScalar|array<int|string, ApiScalar|array<int|string, ApiScalar>>>
+ * @psalm-type ApiMap = array<int|string, ApiScalar|ApiNestedArray>
  */
 final class ApiHttpException extends FinamSdkException
 {

@@ -20,7 +20,7 @@ final class FinamManager implements FinamManagerInterface
     {
         $client = $this->factory->withToken($token);
 
-        return new FinamSession(
+        return FinamSession::fromApis(
             connectApi: $client->connect(),
             accountApi: $client->account(),
             orderApi: $client->order(),
