@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MasyaSmv\FinamSdk\Tests;
 
 use DateTimeImmutable;
+use MasyaSmv\FinamSdk\Dto\Instrument\AllAssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\AssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ClockRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ExchangesRequest;
@@ -27,6 +28,29 @@ final class RequestDtoTest extends TestCase
         $request = new AssetsRequest();
 
         $this->assertSame([], $request->toQuery());
+    }
+
+    public function testAllAssetsRequestBuildsTypedQuery(): void
+    {
+        $request = new AllAssetsRequest(cursor: 42, onlyActive: true);
+
+        $this->assertSame(42, $request->cursor());
+        $this->assertTrue($request->onlyActive());
+        $this->assertFalse($request->onlyDisabled());
+        $this->assertSame(
+            [
+                'cursor' => 42,
+                'only_active' => true,
+            ],
+            $request->toQuery(),
+        );
+    }
+
+    public function testAllAssetsRequestRejectsConflictingFlags(): void
+    {
+        $this->expectException(InvalidRequestException::class);
+
+        new AllAssetsRequest(cursor: null, onlyActive: true, onlyDisabled: true);
     }
 
     public function testClockRequestReturnsEmptyQuery(): void

@@ -19,6 +19,7 @@ use MasyaSmv\FinamSdk\Contracts\Session\SessionOrderServiceInterface;
 use MasyaSmv\FinamSdk\Dto\Connect\SessionDetailsDto;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
+use MasyaSmv\FinamSdk\Session\Mapper\AllAssetsMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\CandleMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\ClockMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\ExchangeMapper;
@@ -59,6 +60,7 @@ final class FinamSession implements FinamSessionInterface
     ): self {
         $reader = new ApiValueReader();
         $decoder = new ApiResponseDecoder($reader);
+        $instrumentMapper = new InstrumentMapper($reader);
         $detailsService = new SessionDetailsService(
             connectApi: $connectApi,
             decoder: $decoder,
@@ -83,7 +85,8 @@ final class FinamSession implements FinamSessionInterface
             instrumentService: new SessionInstrumentService(
                 instrumentApi: $instrumentApi,
                 decoder: $decoder,
-                mapper: new InstrumentMapper($reader),
+                mapper: $instrumentMapper,
+                allAssetsMapper: new AllAssetsMapper($reader, $instrumentMapper),
                 exchangeMapper: new ExchangeMapper($reader),
                 clockMapper: new ClockMapper($reader),
                 scheduleMapper: new ScheduleMapper($reader),
@@ -126,6 +129,14 @@ final class FinamSession implements FinamSessionInterface
     public function placeOrder(PlaceOrderInputDto $order, ?string $accountId = null): \MasyaSmv\FinamSdk\Dto\Order\OrderDto
     {
         return $this->orderService->placeOrder($order, $accountId);
+    }
+
+    public function getAllInstruments(
+        ?int $cursor = null,
+        bool $onlyActive = false,
+        bool $onlyDisabled = false,
+    ): \MasyaSmv\FinamSdk\Dto\Instrument\AllAssetsPageDto {
+        return $this->instrumentService->getAllInstruments($cursor, $onlyActive, $onlyDisabled);
     }
 
     public function getInstruments(): \MasyaSmv\FinamSdk\Collections\InstrumentCollection

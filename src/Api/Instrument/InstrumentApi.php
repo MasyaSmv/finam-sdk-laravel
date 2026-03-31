@@ -6,6 +6,7 @@ namespace MasyaSmv\FinamSdk\Api\Instrument;
 
 use MasyaSmv\FinamSdk\Contracts\Api\InstrumentApiInterface;
 use MasyaSmv\FinamSdk\Client\FinamClient;
+use MasyaSmv\FinamSdk\Dto\Instrument\AllAssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\AssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ClockRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ExchangesRequest;
@@ -22,6 +23,16 @@ final class InstrumentApi implements InstrumentApiInterface
 {
     public function __construct(private FinamClient $client)
     {
+    }
+
+    /**
+     * Полный список инструментов с пагинацией.
+     *
+     * REST path выведен по структуре AssetsService (`/assets/all`) на основе общей документации Finam.
+     */
+    public function allAssets(AllAssetsRequest $request): ApiResponse
+    {
+        return $this->client->get('/assets/all', $request->toQuery());
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MasyaSmv\FinamSdk\Tests\Support;
 
 use MasyaSmv\FinamSdk\Contracts\Api\InstrumentApiInterface;
+use MasyaSmv\FinamSdk\Dto\Instrument\AllAssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\AssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ClockRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ExchangesRequest;
@@ -19,10 +20,16 @@ final class InstrumentApiStub implements InstrumentApiInterface
     public function __construct(
         private ApiResponse $assetsResponse,
         private ApiResponse $assetResponse,
+        private ?ApiResponse $allAssetsResponse = null,
         private ?ApiResponse $clockResponse = null,
         private ?ApiResponse $exchangesResponse = null,
         private ?ApiResponse $scheduleResponse = null,
     ) {
+    }
+
+    public function allAssets(AllAssetsRequest $request): ApiResponse
+    {
+        return $this->allAssetsResponse ?? TestApiResponseFactory::fromArray([]);
     }
 
     public function assets(AssetsRequest $request): ApiResponse

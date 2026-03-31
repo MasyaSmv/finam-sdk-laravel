@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MasyaSmv\FinamSdk\Contracts\Api;
 
+use MasyaSmv\FinamSdk\Dto\Instrument\AllAssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\AssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ClockRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ExchangesRequest;
@@ -15,6 +16,8 @@ use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 
 interface InstrumentApiInterface
 {
+    public function allAssets(AllAssetsRequest $request): ApiResponse;
+
     public function assets(AssetsRequest $request): ApiResponse;
 
     public function clock(ClockRequest $request): ApiResponse;

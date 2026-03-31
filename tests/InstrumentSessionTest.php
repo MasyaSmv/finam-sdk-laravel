@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use MasyaSmv\FinamSdk\Collections\ExchangeCollection;
 use MasyaSmv\FinamSdk\Collections\InstrumentCollection;
 use MasyaSmv\FinamSdk\Collections\ScheduleSessionCollection;
+use MasyaSmv\FinamSdk\Dto\Instrument\AllAssetsPageDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\ClockDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\ExchangeDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\InstrumentDto;
@@ -56,6 +57,7 @@ final class InstrumentSessionTest extends TestCase
                     'meta' => [],
                 ]),
                 assetResponse: TestApiResponseFactory::fromArray([]),
+                allAssetsResponse: TestApiResponseFactory::fromArray([]),
             ),
             marketApi: new MarketApiStub(
                 TestApiResponseFactory::fromArray([]),
@@ -113,6 +115,7 @@ final class InstrumentSessionTest extends TestCase
                     'error' => null,
                     'meta' => [],
                 ]),
+                allAssetsResponse: TestApiResponseFactory::fromArray([]),
             ),
             marketApi: new MarketApiStub(
                 TestApiResponseFactory::fromArray([]),
@@ -148,6 +151,7 @@ final class InstrumentSessionTest extends TestCase
             instrumentApi: new InstrumentApiStub(
                 assetsResponse: TestApiResponseFactory::fromArray([]),
                 assetResponse: TestApiResponseFactory::fromArray([]),
+                allAssetsResponse: TestApiResponseFactory::fromArray([]),
                 exchangesResponse: TestApiResponseFactory::fromArray([
                     'ok' => true,
                     'status' => 200,
@@ -194,6 +198,7 @@ final class InstrumentSessionTest extends TestCase
             instrumentApi: new InstrumentApiStub(
                 assetsResponse: TestApiResponseFactory::fromArray([]),
                 assetResponse: TestApiResponseFactory::fromArray([]),
+                allAssetsResponse: TestApiResponseFactory::fromArray([]),
                 clockResponse: TestApiResponseFactory::fromArray([
                     'ok' => true,
                     'status' => 200,
@@ -235,6 +240,7 @@ final class InstrumentSessionTest extends TestCase
             instrumentApi: new InstrumentApiStub(
                 assetsResponse: TestApiResponseFactory::fromArray([]),
                 assetResponse: TestApiResponseFactory::fromArray([]),
+                allAssetsResponse: TestApiResponseFactory::fromArray([]),
                 scheduleResponse: TestApiResponseFactory::fromArray([
                     'ok' => true,
                     'status' => 200,
@@ -284,5 +290,56 @@ final class InstrumentSessionTest extends TestCase
             new DateTimeImmutable('2026-04-01T12:00:00+00:00'),
             $coreTradingSession->endAt(),
         );
+    }
+
+    public function testGetAllInstrumentsReturnsPageDto(): void
+    {
+        $session = FinamSession::fromApis(
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                assetsResponse: TestApiResponseFactory::fromArray([]),
+                assetResponse: TestApiResponseFactory::fromArray([]),
+                allAssetsResponse: TestApiResponseFactory::fromArray([
+                    'ok' => true,
+                    'status' => 200,
+                    'data' => [
+                        'assets' => [
+                            [
+                                'id' => 'asset-3',
+                                'symbol' => 'LKOH@MISX',
+                                'ticker' => 'LKOH',
+                                'mic' => 'MISX',
+                                'type' => 'ASSET_TYPE_STOCK',
+                                'name' => 'Lukoil',
+                            ],
+                        ],
+                        'next_cursor' => '43',
+                    ],
+                    'error' => null,
+                    'meta' => [],
+                ]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+        );
+
+        $page = $session->getAllInstruments(cursor: 42, onlyActive: true);
+
+        /** @var InstrumentDto|null $firstInstrument */
+        $firstInstrument = $page->assets()->first();
+
+        $this->assertInstanceOf(AllAssetsPageDto::class, $page);
+        $this->assertNotNull($firstInstrument);
+        $this->assertSame(43, $page->nextCursor());
+        $this->assertTrue($page->hasNextPage());
+        $this->assertSame('LKOH@MISX', $firstInstrument->symbol());
     }
 }

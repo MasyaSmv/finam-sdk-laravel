@@ -13,6 +13,7 @@ use MasyaSmv\FinamSdk\Collections\OrderCollection;
 use MasyaSmv\FinamSdk\Collections\QuoteCollection;
 use MasyaSmv\FinamSdk\Collections\TradeCollection;
 use MasyaSmv\FinamSdk\Dto\Connect\SessionDetailsDto;
+use MasyaSmv\FinamSdk\Dto\Instrument\AllAssetsPageDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\ClockDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\InstrumentDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\ScheduleDto;
@@ -37,6 +38,8 @@ interface FinamSessionInterface
     public function getOrder(string $orderId, ?string $accountId = null): OrderDto;
 
     public function placeOrder(PlaceOrderInputDto $order, ?string $accountId = null): OrderDto;
+
+    public function getAllInstruments(?int $cursor = null, bool $onlyActive = false, bool $onlyDisabled = false): AllAssetsPageDto;
 
     public function getInstruments(): InstrumentCollection;
 

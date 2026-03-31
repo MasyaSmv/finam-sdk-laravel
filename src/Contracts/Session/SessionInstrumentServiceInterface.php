@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MasyaSmv\FinamSdk\Contracts\Session;
 
 use MasyaSmv\FinamSdk\Collections\ExchangeCollection;
+use MasyaSmv\FinamSdk\Dto\Instrument\AllAssetsPageDto;
 use MasyaSmv\FinamSdk\Collections\InstrumentCollection;
 use MasyaSmv\FinamSdk\Dto\Instrument\ClockDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\InstrumentDto;
@@ -12,6 +13,8 @@ use MasyaSmv\FinamSdk\Dto\Instrument\ScheduleDto;
 
 interface SessionInstrumentServiceInterface
 {
+    public function getAllInstruments(?int $cursor = null, bool $onlyActive = false, bool $onlyDisabled = false): AllAssetsPageDto;
+
     public function getInstruments(): InstrumentCollection;
 
     public function getInstrument(string $symbol, ?string $accountId = null): InstrumentDto;

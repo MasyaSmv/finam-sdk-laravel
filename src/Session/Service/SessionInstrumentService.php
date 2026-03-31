@@ -9,6 +9,8 @@ use MasyaSmv\FinamSdk\Collections\InstrumentCollection;
 use MasyaSmv\FinamSdk\Contracts\Api\InstrumentApiInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\ApiResponseDecoderInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\SessionInstrumentServiceInterface;
+use MasyaSmv\FinamSdk\Dto\Instrument\AllAssetsPageDto;
+use MasyaSmv\FinamSdk\Dto\Instrument\AllAssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\AssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ClockDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\ClockRequest;
@@ -17,6 +19,7 @@ use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\InstrumentDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\ScheduleDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\ScheduleRequest;
+use MasyaSmv\FinamSdk\Session\Mapper\AllAssetsMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\ClockMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\ExchangeMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\InstrumentMapper;
@@ -28,10 +31,22 @@ final class SessionInstrumentService implements SessionInstrumentServiceInterfac
         private InstrumentApiInterface $instrumentApi,
         private ApiResponseDecoderInterface $decoder,
         private InstrumentMapper $mapper,
+        private AllAssetsMapper $allAssetsMapper,
         private ExchangeMapper $exchangeMapper,
         private ClockMapper $clockMapper,
         private ScheduleMapper $scheduleMapper,
     ) {
+    }
+
+    public function getAllInstruments(
+        ?int $cursor = null,
+        bool $onlyActive = false,
+        bool $onlyDisabled = false,
+    ): AllAssetsPageDto {
+        $response = $this->instrumentApi->allAssets(new AllAssetsRequest($cursor, $onlyActive, $onlyDisabled));
+        $data = $this->decoder->extractData($response, 'assets/all');
+
+        return $this->allAssetsMapper->map($data);
     }
 
     public function getInstruments(): InstrumentCollection

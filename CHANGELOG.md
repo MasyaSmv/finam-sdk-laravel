@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Added paginated `AllAssets` session flow with typed page DTO and cursor contract
 - Added typed asset exchange, clock, and schedule session flows with dedicated DTO and collection contracts
 - Added typed market depth and latest trades session flows with dedicated DTO and collection contracts
 - Unified SDK exception diagnostics through a shared API diagnostic context object
