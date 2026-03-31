@@ -9,7 +9,6 @@ use MasyaSmv\FinamSdk\Dto\Order\CancelOrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrdersRequest;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderRequest;
-use MasyaSmv\FinamSdk\Dto\Order\ReplaceOrderRequest;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 
 final class OrderApiStub implements OrderApiInterface
@@ -37,11 +36,6 @@ final class OrderApiStub implements OrderApiInterface
     }
 
     public function cancel(CancelOrderRequest $request): ApiResponse
-    {
-        return TestApiResponseFactory::fromArray([]);
-    }
-
-    public function replace(ReplaceOrderRequest $request): ApiResponse
     {
         return TestApiResponseFactory::fromArray([]);
     }

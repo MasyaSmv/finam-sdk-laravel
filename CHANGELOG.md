@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Removed undocumented `ReplaceOrder` contract until Finam REST docs provide a confirmed replacement/update endpoint
 - Switched order cancellation to the documented REST DELETE endpoint and removed the fake cancel payload contract
 - Moved GetAsset symbol to the resource path and kept only optional account context in the query contract
 - Added typed SDK config objects so array config now stays only on the Laravel config boundary

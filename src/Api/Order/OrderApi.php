@@ -10,7 +10,6 @@ use MasyaSmv\FinamSdk\Dto\Order\CancelOrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrdersRequest;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderRequest;
-use MasyaSmv\FinamSdk\Dto\Order\ReplaceOrderRequest;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 
 /**
@@ -53,17 +52,6 @@ final class OrderApi implements OrderApiInterface
     {
         return $this->client->delete(
             "/accounts/{$request->accountId()}/orders/{$request->orderId()}",
-            $request->toPayload(),
-        );
-    }
-
-    /**
-     * Замена (изменение) заявки.
-     */
-    public function replace(ReplaceOrderRequest $request): ApiResponse
-    {
-        return $this->client->post(
-            "/accounts/{$request->accountId()}/orders/{$request->orderId()}/replace",
             $request->toPayload(),
         );
     }
