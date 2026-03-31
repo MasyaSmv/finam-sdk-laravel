@@ -13,6 +13,10 @@
 .env
 .env.*
 !.env.example
+/tests/.config
+/tests/.config.*
+!/tests/.config.example
+/.codex/
 
 # -----------------------------------------------------------------------------
 # PHPUnit / Test artifacts

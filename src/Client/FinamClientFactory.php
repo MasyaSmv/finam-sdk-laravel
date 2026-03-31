@@ -19,7 +19,7 @@ final class FinamClientFactory
 
     public function default(): FinamClient
     {
-        $token = (string)($this->config['token'] ?? '');
+        $token = $this->stringConfig($this->config, 'token', '');
 
         return $this->makeWithProvider(new StaticTokenProvider($token));
     }
@@ -36,16 +36,51 @@ final class FinamClientFactory
 
     private function makeWithProvider(TokenProviderInterface $provider): FinamClient
     {
-        $httpConfig = (array)($this->config['http'] ?? []);
+        /** @var array<string, mixed> $httpConfig */
+        $httpConfig = is_array($this->config['http'] ?? null) ? $this->config['http'] : [];
 
         return new FinamClient(
             tokenProvider: $provider,
-            baseUrl: (string)($this->config['base_url'] ?? FinamClient::DEFAULT_BASE_URL),
-            timeout: (float)($httpConfig['timeout'] ?? 10.0),
-            connectTimeout: (float)($httpConfig['connect_timeout'] ?? 5.0),
-            retries: (int)($httpConfig['retries'] ?? 0),
-            retryDelayMs: (int)($httpConfig['retry_delay_ms'] ?? 200),
-            userAgent: (string)($httpConfig['user_agent'] ?? 'finam-sdk-laravel'),
+            baseUrl: $this->stringConfig($this->config, 'base_url', FinamClient::DEFAULT_BASE_URL),
+            timeout: $this->floatConfig($httpConfig, 'timeout', 10.0),
+            connectTimeout: $this->floatConfig($httpConfig, 'connect_timeout', 5.0),
+            retries: $this->intConfig($httpConfig, 'retries', 0),
+            retryDelayMs: $this->intConfig($httpConfig, 'retry_delay_ms', 200),
+            userAgent: $this->stringConfig($httpConfig, 'user_agent', 'finam-sdk-laravel'),
         );
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function stringConfig(array $config, string $key, string $default): string
+    {
+        $value = $config[$key] ?? $default;
+
+        return is_scalar($value) ? (string) $value : $default;
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function floatConfig(array $config, string $key, float $default): float
+    {
+        $value = $config[$key] ?? $default;
+
+        return is_int($value) || is_float($value) || is_string($value)
+            ? (float) $value
+            : $default;
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function intConfig(array $config, string $key, int $default): int
+    {
+        $value = $config[$key] ?? $default;
+
+        return is_int($value) || is_float($value) || is_string($value)
+            ? (int) $value
+            : $default;
     }
 }

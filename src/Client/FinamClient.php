@@ -7,7 +7,6 @@ namespace MasyaSmv\FinamSdk\Client;
 use GuzzleHttp\Client as Guzzle;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
-use LogicException;
 use MasyaSmv\FinamSdk\Api\Account\AccountApi;
 use MasyaSmv\FinamSdk\Api\Connect\ConnectApi;
 use MasyaSmv\FinamSdk\Api\Instrument\InstrumentApi;
@@ -232,7 +231,9 @@ final class FinamClient
                     );
                 }
 
-                usleep($this->retryDelayMs * 1000);
+                $sleepMicroseconds = max(0, $this->retryDelayMs) * 1000;
+
+                usleep($sleepMicroseconds);
             }
         }
     }
@@ -276,13 +277,18 @@ final class FinamClient
 
     /**
      * @template T of object
+     *
      * @param class-string<T> $class
+     *
      * @return T
      */
-    private function resource(string $class): object
+    private function resource(string $class)
     {
         if (isset($this->resources[$class])) {
-            return $this->resources[$class];
+            /** @var T $resource */
+            $resource = $this->resources[$class];
+
+            return $resource;
         }
 
         // Защита от опечаток / несуществующих классов
@@ -292,12 +298,12 @@ final class FinamClient
 
         $instance = new $class($this);
 
-        // Защита, что создали объект нужного типа (на случай странных фабрик/наследований)
-        if (!$instance instanceof $class) {
-            throw new LogicException("API resource factory created invalid instance for: {$class}");
-        }
+        $this->resources[$class] = $instance;
 
-        return $this->resources[$class] = $instance;
+        /** @var T $resource */
+        $resource = $instance;
+
+        return $resource;
     }
 
     public function connect(): ConnectApi

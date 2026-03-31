@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace MasyaSmv\FinamSdk;
 
 use Illuminate\Contracts\Support\DeferrableProvider;
@@ -8,6 +10,7 @@ use MasyaSmv\FinamSdk\Auth\StaticTokenProvider;
 use MasyaSmv\FinamSdk\Auth\TokenProviderInterface;
 use MasyaSmv\FinamSdk\Client\FinamClient;
 use MasyaSmv\FinamSdk\Client\FinamClientFactory;
+use MasyaSmv\FinamSdk\Contracts\FinamManagerInterface;
 
 final class FinamSdkServiceProvider extends ServiceProvider implements DeferrableProvider
 {
@@ -19,7 +22,7 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
             /** @var array<string, mixed> $cfg */
             $cfg = (array)$app['config']->get('finam', []);
 
-            return new StaticTokenProvider((string)($cfg['token'] ?? ''));
+            return new StaticTokenProvider($this->stringConfig($cfg, 'token', ''));
         });
 
         $this->app->singleton(FinamClientFactory::class, function ($app): FinamClientFactory {
@@ -38,6 +41,14 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
             return $factory->default();
         });
 
+        $this->app->singleton(FinamManagerInterface::class, function ($app): FinamManager {
+            /** @var FinamClientFactory $factory */
+            $factory = $app->make(FinamClientFactory::class);
+
+            return new FinamManager($factory);
+        });
+
+        $this->app->alias(FinamManagerInterface::class, 'finam');
         $this->app->alias(FinamClient::class, 'finam.sdk');
     }
 
@@ -48,12 +59,17 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
         ], 'finam-config');
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function provides(): array
     {
         return [
             TokenProviderInterface::class,
             FinamClientFactory::class,
             FinamClient::class,
+            FinamManagerInterface::class,
+            'finam',
             'finam.sdk',
         ];
     }
@@ -61,5 +77,15 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
     private function configPath(): string
     {
         return __DIR__ . '/../config/finam.php';
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function stringConfig(array $config, string $key, string $default): string
+    {
+        $value = $config[$key] ?? $default;
+
+        return is_scalar($value) ? (string) $value : $default;
     }
 }
