@@ -13,6 +13,7 @@ use MasyaSmv\FinamSdk\Api\Connect\ConnectApi;
 use MasyaSmv\FinamSdk\Api\Instrument\InstrumentApi;
 use MasyaSmv\FinamSdk\Api\Market\MarketApi;
 use MasyaSmv\FinamSdk\Api\Order\OrderApi;
+use MasyaSmv\FinamSdk\Api\Reports\ReportsApi;
 use MasyaSmv\FinamSdk\Api\UsageMetrics\UsageMetricsApi;
 use MasyaSmv\FinamSdk\Auth\StaticTokenProvider;
 use MasyaSmv\FinamSdk\Auth\TokenProviderInterface;
@@ -371,6 +372,14 @@ final class FinamClient
     {
         /** @var UsageMetricsApi $api */
         $api = $this->resource(UsageMetricsApi::class);
+
+        return $api;
+    }
+
+    public function reports(): ReportsApi
+    {
+        /** @var ReportsApi $api */
+        $api = $this->resource(ReportsApi::class);
 
         return $api;
     }

@@ -20,6 +20,10 @@ use MasyaSmv\FinamSdk\Dto\Order\CancelOrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrdersRequest;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderRequest;
+use MasyaSmv\FinamSdk\Dto\Report\CreateAccountReportInputDto;
+use MasyaSmv\FinamSdk\Dto\Report\CreateAccountReportRequest;
+use MasyaSmv\FinamSdk\Dto\Report\GetAccountReportInfoRequest;
+use MasyaSmv\FinamSdk\Dto\Report\ReportDateRangeDto;
 use MasyaSmv\FinamSdk\Exceptions\InvalidRequestException;
 
 final class RequestDtoTest extends TestCase
@@ -199,5 +203,38 @@ final class RequestDtoTest extends TestCase
             ],
             $request->toPayload(),
         );
+    }
+
+    public function testCreateAccountReportRequestBuildsPayload(): void
+    {
+        $request = new CreateAccountReportRequest(
+            new CreateAccountReportInputDto(
+                accountId: '1899011',
+                reportForm: 'REPORT_FORM_XLSX',
+                dateRange: new ReportDateRangeDto(
+                    from: new DateTimeImmutable('2026-03-01'),
+                    to: new DateTimeImmutable('2026-03-31'),
+                ),
+            ),
+        );
+
+        $this->assertSame(
+            [
+                'account_id' => '1899011',
+                'report_form' => 'REPORT_FORM_XLSX',
+                'date_range' => [
+                    'from' => '2026-03-01',
+                    'to' => '2026-03-31',
+                ],
+            ],
+            $request->toPayload(),
+        );
+    }
+
+    public function testGetAccountReportInfoRequestRejectsEmptyReportId(): void
+    {
+        $this->expectException(InvalidRequestException::class);
+
+        new GetAccountReportInfoRequest('');
     }
 }

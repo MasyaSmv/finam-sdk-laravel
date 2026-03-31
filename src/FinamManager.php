@@ -36,6 +36,7 @@ final class FinamManager implements FinamManagerInterface
             instrumentApi: $client->instrument(),
             marketApi: $client->market(),
             usageMetricsApi: $client->usageMetrics(),
+            reportsApi: $client->reports(),
         );
     }
 

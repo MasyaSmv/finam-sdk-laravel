@@ -21,6 +21,9 @@ use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
 use MasyaSmv\FinamSdk\Dto\Market\OrderBookDto;
 use MasyaSmv\FinamSdk\Dto\Order\OrderDto;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
+use MasyaSmv\FinamSdk\Dto\Report\AccountReportInfoDto;
+use MasyaSmv\FinamSdk\Dto\Report\CreateAccountReportInputDto;
+use MasyaSmv\FinamSdk\Dto\Report\CreatedAccountReportDto;
 use MasyaSmv\FinamSdk\Dto\UsageMetrics\UsageMetricsDto;
 
 interface FinamSessionInterface
@@ -64,4 +67,8 @@ interface FinamSessionInterface
     public function getLatestTrades(string $symbol): TradeCollection;
 
     public function getUsageMetrics(): UsageMetricsDto;
+
+    public function createAccountReport(CreateAccountReportInputDto $report): CreatedAccountReportDto;
+
+    public function getAccountReportInfo(string $reportId): AccountReportInfoDto;
 }

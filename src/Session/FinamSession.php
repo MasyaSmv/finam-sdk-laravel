@@ -10,6 +10,7 @@ use MasyaSmv\FinamSdk\Contracts\Api\ConnectApiInterface;
 use MasyaSmv\FinamSdk\Contracts\Api\InstrumentApiInterface;
 use MasyaSmv\FinamSdk\Contracts\Api\MarketApiInterface;
 use MasyaSmv\FinamSdk\Contracts\Api\OrderApiInterface;
+use MasyaSmv\FinamSdk\Contracts\Api\ReportsApiInterface;
 use MasyaSmv\FinamSdk\Contracts\Api\UsageMetricsApiInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamSessionInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\SessionDetailsServiceInterface;
@@ -17,6 +18,7 @@ use MasyaSmv\FinamSdk\Contracts\Session\SessionInstrumentServiceInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\SessionMarketDataServiceInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\SessionOperationServiceInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\SessionOrderServiceInterface;
+use MasyaSmv\FinamSdk\Contracts\Session\SessionReportServiceInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\SessionUsageMetricsServiceInterface;
 use MasyaSmv\FinamSdk\Dto\Connect\SessionDetailsDto;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
@@ -34,15 +36,18 @@ use MasyaSmv\FinamSdk\Session\Mapper\ScheduleMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\SessionDetailsMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\TradeMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\UsageMetricsMapper;
+use MasyaSmv\FinamSdk\Session\Mapper\ReportMapper;
 use MasyaSmv\FinamSdk\Session\Service\SessionAccountResolver;
 use MasyaSmv\FinamSdk\Session\Service\SessionDetailsService;
 use MasyaSmv\FinamSdk\Session\Service\SessionInstrumentService;
 use MasyaSmv\FinamSdk\Session\Service\SessionMarketDataService;
 use MasyaSmv\FinamSdk\Session\Service\SessionOperationService;
 use MasyaSmv\FinamSdk\Session\Service\SessionOrderService;
+use MasyaSmv\FinamSdk\Session\Service\SessionReportService;
 use MasyaSmv\FinamSdk\Session\Service\SessionUsageMetricsService;
 use MasyaSmv\FinamSdk\Session\Support\ApiResponseDecoder;
 use MasyaSmv\FinamSdk\Session\Support\ApiValueReader;
+use MasyaSmv\FinamSdk\Api\Reports\UnsupportedReportsApi;
 use MasyaSmv\FinamSdk\Api\UsageMetrics\UnsupportedUsageMetricsApi;
 
 final class FinamSession implements FinamSessionInterface
@@ -54,6 +59,7 @@ final class FinamSession implements FinamSessionInterface
         private SessionInstrumentServiceInterface $instrumentService,
         private SessionMarketDataServiceInterface $marketDataService,
         private SessionUsageMetricsServiceInterface $usageMetricsService,
+        private SessionReportServiceInterface $reportService,
     ) {
     }
 
@@ -64,6 +70,7 @@ final class FinamSession implements FinamSessionInterface
         InstrumentApiInterface $instrumentApi,
         MarketApiInterface $marketApi,
         ?UsageMetricsApiInterface $usageMetricsApi = null,
+        ?ReportsApiInterface $reportsApi = null,
     ): self {
         $reader = new ApiValueReader();
         $decoder = new ApiResponseDecoder($reader);
@@ -110,6 +117,11 @@ final class FinamSession implements FinamSessionInterface
                 usageMetricsApi: $usageMetricsApi ?? new UnsupportedUsageMetricsApi(),
                 decoder: $decoder,
                 mapper: new UsageMetricsMapper($reader),
+            ),
+            reportService: new SessionReportService(
+                reportsApi: $reportsApi ?? new UnsupportedReportsApi(),
+                decoder: $decoder,
+                mapper: new ReportMapper($reader),
             ),
         );
     }
@@ -199,5 +211,16 @@ final class FinamSession implements FinamSessionInterface
     public function getUsageMetrics(): \MasyaSmv\FinamSdk\Dto\UsageMetrics\UsageMetricsDto
     {
         return $this->usageMetricsService->getUsageMetrics();
+    }
+
+    public function createAccountReport(
+        \MasyaSmv\FinamSdk\Dto\Report\CreateAccountReportInputDto $report,
+    ): \MasyaSmv\FinamSdk\Dto\Report\CreatedAccountReportDto {
+        return $this->reportService->createAccountReport($report);
+    }
+
+    public function getAccountReportInfo(string $reportId): \MasyaSmv\FinamSdk\Dto\Report\AccountReportInfoDto
+    {
+        return $this->reportService->getAccountReportInfo($reportId);
     }
 }
