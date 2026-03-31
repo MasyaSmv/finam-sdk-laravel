@@ -16,6 +16,7 @@ use MasyaSmv\FinamSdk\Auth\StaticTokenProvider;
 use MasyaSmv\FinamSdk\Auth\TokenProviderInterface;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiError;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiHeaders;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiDiagnosticContext;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiMeta;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiPayload;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiRequestContext;
@@ -190,6 +191,12 @@ final class FinamClient
                         message: 'Response is not valid JSON: ' . $jsonError,
                         httpStatus: $status,
                         rawBody: mb_substr($body, 0, 2000),
+                        context: new ApiDiagnosticContext(
+                            endpoint: $uri,
+                            request: $this->meta($headers, $method, $uri, $options, $attempt)->request(),
+                            headers: $this->meta($headers, $method, $uri, $options, $attempt)->headers(),
+                            rawBody: mb_substr($body, 0, 2000),
+                        ),
                     );
                 }
 
@@ -224,6 +231,10 @@ final class FinamClient
                 if ($attempt >= $maxAttempts) {
                     throw new ApiRequestFailedException(
                         sprintf('Finam API request failed after %d attempt(s): %s', $attempt, $e->getMessage()),
+                        context: new ApiDiagnosticContext(
+                            endpoint: $uri,
+                            request: $this->requestContext($method, $uri, $options, $attempt),
+                        ),
                         previous: $e,
                     );
                 }
@@ -371,13 +382,26 @@ final class FinamClient
 
         return new ApiMeta(
             headers: new ApiHeaders($normalizedHeaders),
-            request: new ApiRequestContext(
-                method: $method,
-                uri: $uri,
-                query: new ApiPayload($query),
-                payload: new ApiPayload($payload),
-                attempt: $attempt,
-            ),
+            request: $this->requestContext($method, $uri, $options, $attempt),
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function requestContext(string $method, string $uri, array $options, int $attempt): ApiRequestContext
+    {
+        /** @var array<string, scalar|array<int|string, scalar|null>> $query */
+        $query = is_array($options['query'] ?? null) ? $options['query'] : [];
+        /** @var array<string, scalar|array<int|string, scalar|null>> $payload */
+        $payload = is_array($options['json'] ?? null) ? $options['json'] : [];
+
+        return new ApiRequestContext(
+            method: $method,
+            uri: $uri,
+            query: new ApiPayload($query),
+            payload: new ApiPayload($payload),
+            attempt: $attempt,
         );
     }
 

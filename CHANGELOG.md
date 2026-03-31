@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Unified SDK exception diagnostics through a shared API diagnostic context object
 - Refined asset DTO and mapping to match the documented Finam asset model more closely
 - Removed undocumented `ReplaceOrder` contract until Finam REST docs provide a confirmed replacement/update endpoint
 - Switched order cancellation to the documented REST DELETE endpoint and removed the fake cancel payload contract

@@ -6,6 +6,7 @@ namespace MasyaSmv\FinamSdk\Session\Support;
 
 use MasyaSmv\FinamSdk\Contracts\Session\ApiResponseDecoderInterface;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiHeaders;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiDiagnosticContext;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiPayload;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 use MasyaSmv\FinamSdk\Exceptions\ApiHttpException;
@@ -44,6 +45,12 @@ final class ApiResponseDecoder implements ApiResponseDecoderInterface
         if ($data === null) {
             throw new InvalidResponseException(
                 sprintf('Response data for endpoint "%s" must be an object.', $endpoint),
+                context: new ApiDiagnosticContext(
+                    endpoint: $endpoint,
+                    request: $this->reader->requestContext($response),
+                    headers: $response->meta()->headers(),
+                    rawBody: $response->error()?->raw(),
+                ),
             );
         }
 

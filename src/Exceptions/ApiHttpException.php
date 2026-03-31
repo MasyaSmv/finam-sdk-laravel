@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MasyaSmv\FinamSdk\Exceptions;
 
 use MasyaSmv\FinamSdk\Dto\Transport\ApiHeaders;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiDiagnosticContext;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiPayload;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiRequestContext;
 
@@ -14,6 +15,8 @@ use MasyaSmv\FinamSdk\Dto\Transport\ApiRequestContext;
  */
 final class ApiHttpException extends FinamSdkException
 {
+    public ApiDiagnosticContext $context;
+
     public function __construct(
         string $message,
         public int $httpStatus,
@@ -27,5 +30,14 @@ final class ApiHttpException extends FinamSdkException
         public ?string $rawBody = null,
     ) {
         parent::__construct($message, $httpStatus);
+
+        $this->context = new ApiDiagnosticContext(
+            endpoint: $this->endpoint,
+            request: $this->requestContext,
+            headers: $this->headers,
+            requestId: $this->requestId,
+            errorPayload: $this->errorPayload,
+            rawBody: $this->rawBody,
+        );
     }
 }
