@@ -11,6 +11,8 @@ use MasyaSmv\FinamSdk\Auth\TokenProviderInterface;
 use MasyaSmv\FinamSdk\Client\FinamClient;
 use MasyaSmv\FinamSdk\Client\FinamClientFactory;
 use MasyaSmv\FinamSdk\Contracts\FinamManagerInterface;
+use MasyaSmv\FinamSdk\Dto\Config\FinamConfig;
+use MasyaSmv\FinamSdk\Dto\Config\FinamHttpConfig;
 
 final class FinamSdkServiceProvider extends ServiceProvider implements DeferrableProvider
 {
@@ -18,19 +20,38 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
     {
         $this->mergeConfigFrom($this->configPath(), 'finam');
 
-        $this->app->bind(TokenProviderInterface::class, function ($app): TokenProviderInterface {
+        $this->app->singleton(FinamConfig::class, function ($app): FinamConfig {
             /** @var array<string, mixed> $cfg */
-            $cfg = (array)$app['config']->get('finam', []);
+            $cfg = (array) $app['config']->get('finam', []);
+            /** @var array<string, mixed> $http */
+            $http = is_array($cfg['http'] ?? null) ? $cfg['http'] : [];
 
-            return new StaticTokenProvider($this->stringConfig($cfg, 'token', ''));
+            return new FinamConfig(
+                baseUrl: $this->stringConfig($cfg, 'base_url', FinamClient::DEFAULT_BASE_URL),
+                token: $this->stringConfig($cfg, 'token', ''),
+                http: new FinamHttpConfig(
+                    timeout: $this->floatConfig($http, 'timeout', 10.0),
+                    connectTimeout: $this->floatConfig($http, 'connect_timeout', 5.0),
+                    retries: $this->intConfig($http, 'retries', 0),
+                    retryDelayMs: $this->intConfig($http, 'retry_delay_ms', 200),
+                    userAgent: $this->stringConfig($http, 'user_agent', 'finam-sdk-laravel'),
+                ),
+            );
+        });
+
+        $this->app->bind(TokenProviderInterface::class, function ($app): TokenProviderInterface {
+            /** @var FinamConfig $config */
+            $config = $app->make(FinamConfig::class);
+
+            return new StaticTokenProvider($config->token());
         });
 
         $this->app->singleton(FinamClientFactory::class, function ($app): FinamClientFactory {
-            /** @var array<string, mixed> $cfg */
-            $cfg = (array)$app['config']->get('finam', []);
+            /** @var FinamConfig $config */
+            $config = $app->make(FinamConfig::class);
 
             return new FinamClientFactory(
-                config: $cfg,
+                config: $config,
             );
         });
 
@@ -66,6 +87,7 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
     {
         return [
             TokenProviderInterface::class,
+            FinamConfig::class,
             FinamClientFactory::class,
             FinamClient::class,
             FinamManagerInterface::class,
@@ -87,5 +109,29 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
         $value = $config[$key] ?? $default;
 
         return is_scalar($value) ? (string) $value : $default;
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function floatConfig(array $config, string $key, float $default): float
+    {
+        $value = $config[$key] ?? $default;
+
+        return is_int($value) || is_float($value) || is_string($value)
+            ? (float) $value
+            : $default;
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function intConfig(array $config, string $key, int $default): int
+    {
+        $value = $config[$key] ?? $default;
+
+        return is_int($value) || is_float($value) || is_string($value)
+            ? (int) $value
+            : $default;
     }
 }

@@ -8,6 +8,7 @@ use MasyaSmv\FinamSdk\Client\FinamClient;
 use MasyaSmv\FinamSdk\Auth\TokenProviderInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamManagerInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamSessionInterface;
+use MasyaSmv\FinamSdk\Dto\Config\FinamConfig;
 use MasyaSmv\FinamSdk\Facades\Finam;
 
 /**
@@ -71,6 +72,20 @@ final class ServiceProviderTest extends TestCase
         $provider = $this->app->make(TokenProviderInterface::class);
 
         $this->assertSame('test-token', $provider->getToken());
+    }
+
+    public function test_typed_config_is_resolved(): void
+    {
+        /** @var FinamConfig $config */
+        $config = $this->app->make(FinamConfig::class);
+
+        $this->assertSame('https://example.test', $config->baseUrl());
+        $this->assertSame('test-token', $config->token());
+        $this->assertSame(3.0, $config->http()->timeout());
+        $this->assertSame(1.0, $config->http()->connectTimeout());
+        $this->assertSame(1, $config->http()->retries());
+        $this->assertSame(10, $config->http()->retryDelayMs());
+        $this->assertSame('finam-sdk-tests', $config->http()->userAgent());
     }
 
     public function test_facade_connect_returns_session(): void
