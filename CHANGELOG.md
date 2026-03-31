@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- Switched order cancellation to the documented REST DELETE endpoint and removed the fake cancel payload contract
+- Moved GetAsset symbol to the resource path and kept only optional account context in the query contract
 - Added typed SDK config objects so array config now stays only on the Laravel config boundary
 - Aligned instrument asset params and options chain requests with documented Finam REST resource paths
 - Reworked weak request DTOs to use typed constructors instead of raw array input for active market, instrument, and order flows

@@ -8,13 +8,9 @@ use MasyaSmv\FinamSdk\Exceptions\InvalidRequestException;
 
 final class CancelOrderRequest
 {
-    /**
-     * @param array<string, mixed> $payload
-     */
     public function __construct(
         private string $accountId,
         private string $orderId,
-        private array $payload = [],
     ) {
         if ($this->accountId === '') {
             throw new InvalidRequestException('AccountId must not be empty.');
@@ -36,10 +32,10 @@ final class CancelOrderRequest
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<never, never>
      */
     public function toPayload(): array
     {
-        return $this->payload;
+        return [];
     }
 }

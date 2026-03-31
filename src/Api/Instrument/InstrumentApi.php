@@ -53,7 +53,7 @@ final class InstrumentApi implements InstrumentApiInterface
      */
     public function asset(GetAssetRequest $request): ApiResponse
     {
-        return $this->client->get('/assets/asset', $request->toQuery());
+        return $this->client->get("/assets/{$request->symbol()}", $request->toQuery());
     }
 
     /**

@@ -51,8 +51,8 @@ final class OrderApi implements OrderApiInterface
      */
     public function cancel(CancelOrderRequest $request): ApiResponse
     {
-        return $this->client->post(
-            "/accounts/{$request->accountId()}/orders/{$request->orderId()}/cancel",
+        return $this->client->delete(
+            "/accounts/{$request->accountId()}/orders/{$request->orderId()}",
             $request->toPayload(),
         );
     }

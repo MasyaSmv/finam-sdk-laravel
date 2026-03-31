@@ -131,6 +131,16 @@ final class FinamClient
     }
 
     /**
+     * DELETE (нормализованный JSON).
+     *
+     * @param array<string, mixed> $query
+     */
+    public function delete(string $uri, array $query = []): ApiResponse
+    {
+        return $this->requestJson('DELETE', $uri, ['query' => $query]);
+    }
+
+    /**
      * Единая точка запроса: сетевой вызов + нормализация ответа.
      *
      * @param array<string, mixed> $options

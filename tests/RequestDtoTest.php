@@ -8,11 +8,13 @@ use DateTimeImmutable;
 use MasyaSmv\FinamSdk\Dto\Instrument\AssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ClockRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ExchangesRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetParamsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\OptionsChainRequest;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesRequest;
 use MasyaSmv\FinamSdk\Dto\Market\QuotesRequest;
+use MasyaSmv\FinamSdk\Dto\Order\CancelOrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrdersRequest;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderRequest;
@@ -46,6 +48,14 @@ final class RequestDtoTest extends TestCase
         $request = new GetAssetParamsRequest('SBER@MISX', 'account-1');
 
         $this->assertSame('SBER@MISX', $request->symbol());
+        $this->assertSame(['account_id' => 'account-1'], $request->toQuery());
+    }
+
+    public function testGetAssetRequestMovesSymbolToPathAndKeepsOptionalAccountInQuery(): void
+    {
+        $request = new GetAssetRequest('GAZP@MISX', 'account-1');
+
+        $this->assertSame('GAZP@MISX', $request->symbol());
         $this->assertSame(['account_id' => 'account-1'], $request->toQuery());
     }
 
@@ -112,6 +122,15 @@ final class RequestDtoTest extends TestCase
 
         $this->assertSame('account-1', $request->accountId());
         $this->assertSame([], $request->toQuery());
+    }
+
+    public function testCancelOrderRequestDoesNotBuildPayload(): void
+    {
+        $request = new CancelOrderRequest('account-1', 'order-1');
+
+        $this->assertSame('account-1', $request->accountId());
+        $this->assertSame('order-1', $request->orderId());
+        $this->assertSame([], $request->toPayload());
     }
 
     public function testPlaceOrderRequestBuildsPayloadFromInputDto(): void

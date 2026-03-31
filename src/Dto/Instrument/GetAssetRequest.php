@@ -17,14 +17,17 @@ final class GetAssetRequest
         }
     }
 
+    public function symbol(): string
+    {
+        return $this->symbol;
+    }
+
     /**
-     * @return array<string, mixed>
+     * @return array{account_id?: string}
      */
     public function toQuery(): array
     {
-        $query = [
-            'symbol' => $this->symbol,
-        ];
+        $query = [];
 
         if ($this->accountId !== null && $this->accountId !== '') {
             $query['account_id'] = $this->accountId;
