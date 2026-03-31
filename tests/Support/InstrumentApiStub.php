@@ -19,6 +19,9 @@ final class InstrumentApiStub implements InstrumentApiInterface
     public function __construct(
         private ApiResponse $assetsResponse,
         private ApiResponse $assetResponse,
+        private ?ApiResponse $clockResponse = null,
+        private ?ApiResponse $exchangesResponse = null,
+        private ?ApiResponse $scheduleResponse = null,
     ) {
     }
 
@@ -29,12 +32,12 @@ final class InstrumentApiStub implements InstrumentApiInterface
 
     public function clock(ClockRequest $request): ApiResponse
     {
-        return TestApiResponseFactory::fromArray([]);
+        return $this->clockResponse ?? TestApiResponseFactory::fromArray([]);
     }
 
     public function exchanges(ExchangesRequest $request): ApiResponse
     {
-        return TestApiResponseFactory::fromArray([]);
+        return $this->exchangesResponse ?? TestApiResponseFactory::fromArray([]);
     }
 
     public function asset(GetAssetRequest $request): ApiResponse
@@ -54,6 +57,6 @@ final class InstrumentApiStub implements InstrumentApiInterface
 
     public function schedule(ScheduleRequest $request): ApiResponse
     {
-        return TestApiResponseFactory::fromArray([]);
+        return $this->scheduleResponse ?? TestApiResponseFactory::fromArray([]);
     }
 }

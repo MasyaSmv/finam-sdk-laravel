@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace MasyaSmv\FinamSdk\Tests;
 
+use DateTimeImmutable;
+use MasyaSmv\FinamSdk\Collections\ExchangeCollection;
 use MasyaSmv\FinamSdk\Collections\InstrumentCollection;
+use MasyaSmv\FinamSdk\Collections\ScheduleSessionCollection;
+use MasyaSmv\FinamSdk\Dto\Instrument\ClockDto;
+use MasyaSmv\FinamSdk\Dto\Instrument\ExchangeDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\InstrumentDto;
+use MasyaSmv\FinamSdk\Dto\Instrument\ScheduleDto;
+use MasyaSmv\FinamSdk\Dto\Instrument\ScheduleSessionDto;
 use MasyaSmv\FinamSdk\Session\FinamSession;
 use MasyaSmv\FinamSdk\Tests\Support\AccountApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\ConnectApiStub;
@@ -126,5 +133,156 @@ final class InstrumentSessionTest extends TestCase
         $this->assertSame('0.01', $instrument->minStep());
         $this->assertSame('RUB', $instrument->quoteCurrency());
         $this->assertSame('Gazprom PJSC', $instrument->shortName());
+    }
+
+    public function testGetExchangesReturnsTypedCollection(): void
+    {
+        $session = FinamSession::fromApis(
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                assetsResponse: TestApiResponseFactory::fromArray([]),
+                assetResponse: TestApiResponseFactory::fromArray([]),
+                exchangesResponse: TestApiResponseFactory::fromArray([
+                    'ok' => true,
+                    'status' => 200,
+                    'data' => [
+                        'exchanges' => [
+                            [
+                                'mic' => 'MISX',
+                                'name' => 'MOSCOW EXCHANGE - ALL MARKETS',
+                            ],
+                        ],
+                    ],
+                    'error' => null,
+                    'meta' => [],
+                ]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+        );
+
+        $exchanges = $session->getExchanges();
+
+        /** @var ExchangeDto|null $firstExchange */
+        $firstExchange = $exchanges->first();
+
+        $this->assertInstanceOf(ExchangeCollection::class, $exchanges);
+        $this->assertNotNull($firstExchange);
+        $this->assertSame('MISX', $firstExchange->mic());
+        $this->assertSame('MOSCOW EXCHANGE - ALL MARKETS', $firstExchange->name());
+        $this->assertSame('MISX', $exchanges->findByMic('MISX')?->mic());
+    }
+
+    public function testGetClockReturnsDto(): void
+    {
+        $session = FinamSession::fromApis(
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                assetsResponse: TestApiResponseFactory::fromArray([]),
+                assetResponse: TestApiResponseFactory::fromArray([]),
+                clockResponse: TestApiResponseFactory::fromArray([
+                    'ok' => true,
+                    'status' => 200,
+                    'data' => [
+                        'timestamp' => [
+                            'seconds' => '1775034000',
+                            'nanos' => 123000000,
+                        ],
+                    ],
+                    'error' => null,
+                    'meta' => [],
+                ]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+        );
+
+        $clock = $session->getClock();
+
+        $this->assertInstanceOf(ClockDto::class, $clock);
+        $this->assertSame(
+            '2026-04-01T09:00:00.123+00:00',
+            $clock->timestamp()->format('Y-m-d\TH:i:s.vP'),
+        );
+    }
+
+    public function testGetScheduleReturnsDto(): void
+    {
+        $session = FinamSession::fromApis(
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                assetsResponse: TestApiResponseFactory::fromArray([]),
+                assetResponse: TestApiResponseFactory::fromArray([]),
+                scheduleResponse: TestApiResponseFactory::fromArray([
+                    'ok' => true,
+                    'status' => 200,
+                    'data' => [
+                        'symbol' => 'YDEX@MISX',
+                        'sessions' => [
+                            [
+                                'type' => 'CORE_TRADING',
+                                'interval' => [
+                                    'start_time' => [
+                                        'seconds' => '1775037600',
+                                        'nanos' => 0,
+                                    ],
+                                    'end_time' => [
+                                        'seconds' => '1775044800',
+                                        'nanos' => 0,
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                    'error' => null,
+                    'meta' => [],
+                ]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+        );
+
+        $schedule = $session->getSchedule('YDEX@MISX');
+
+        /** @var ScheduleSessionDto|null $coreTradingSession */
+        $coreTradingSession = $schedule->sessions()->firstByType('CORE_TRADING');
+
+        $this->assertInstanceOf(ScheduleDto::class, $schedule);
+        $this->assertInstanceOf(ScheduleSessionCollection::class, $schedule->sessions());
+        $this->assertNotNull($coreTradingSession);
+        $this->assertSame('YDEX@MISX', $schedule->symbol());
+        $this->assertSame('CORE_TRADING', $coreTradingSession->type());
+        $this->assertEquals(
+            new DateTimeImmutable('2026-04-01T10:00:00+00:00'),
+            $coreTradingSession->startAt(),
+        );
+        $this->assertEquals(
+            new DateTimeImmutable('2026-04-01T12:00:00+00:00'),
+            $coreTradingSession->endAt(),
+        );
     }
 }

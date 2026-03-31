@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MasyaSmv\FinamSdk\Session\Support;
 
 use DateTimeImmutable;
+use DateTimeZone;
 use MasyaSmv\FinamSdk\Collections\StringCollection;
 use MasyaSmv\FinamSdk\Collections\Transport\ApiPayloadCollection;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiHeaders;
@@ -101,6 +102,47 @@ final class ApiValueReader
         }
 
         return $this->parseDateTime($value, $field);
+    }
+
+    public function requireTimestamp(ApiPayload $data, string $field): DateTimeImmutable
+    {
+        $timestamp = $this->optionalTimestamp($data, $field);
+
+        if ($timestamp === null) {
+            throw new ResponseMappingException(sprintf('Field "%s" must be a timestamp object.', $field));
+        }
+
+        return $timestamp;
+    }
+
+    public function optionalTimestamp(ApiPayload $data, string $field): ?DateTimeImmutable
+    {
+        $payload = $data->object($field);
+
+        if ($payload === null) {
+            return null;
+        }
+
+        return $this->timestampFromPayload($payload, $field);
+    }
+
+    public function timestampFromPayload(ApiPayload $data, string $field): DateTimeImmutable
+    {
+        $seconds = $this->requireInt($data, 'seconds', $field);
+        $nanos = $this->optionalInt($data, 'nanos') ?? 0;
+        $microseconds = intdiv($nanos, 1000);
+
+        $timestamp = DateTimeImmutable::createFromFormat(
+            'U.u',
+            sprintf('%d.%06d', $seconds, $microseconds),
+            new DateTimeZone('UTC'),
+        );
+
+        if ($timestamp === false) {
+            throw new ResponseMappingException(sprintf('Field "%s" contains invalid timestamp payload.', $field));
+        }
+
+        return $timestamp;
     }
 
     public function requireDecimal(ApiPayload $data, string $field): string

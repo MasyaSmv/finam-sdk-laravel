@@ -6,13 +6,16 @@ namespace MasyaSmv\FinamSdk\Contracts;
 
 use DateTimeInterface;
 use MasyaSmv\FinamSdk\Collections\CandleCollection;
+use MasyaSmv\FinamSdk\Collections\ExchangeCollection;
 use MasyaSmv\FinamSdk\Collections\InstrumentCollection;
 use MasyaSmv\FinamSdk\Collections\OperationCollection;
 use MasyaSmv\FinamSdk\Collections\OrderCollection;
 use MasyaSmv\FinamSdk\Collections\QuoteCollection;
 use MasyaSmv\FinamSdk\Collections\TradeCollection;
 use MasyaSmv\FinamSdk\Dto\Connect\SessionDetailsDto;
+use MasyaSmv\FinamSdk\Dto\Instrument\ClockDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\InstrumentDto;
+use MasyaSmv\FinamSdk\Dto\Instrument\ScheduleDto;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
 use MasyaSmv\FinamSdk\Dto\Market\OrderBookDto;
 use MasyaSmv\FinamSdk\Dto\Order\OrderDto;
@@ -38,6 +41,12 @@ interface FinamSessionInterface
     public function getInstruments(): InstrumentCollection;
 
     public function getInstrument(string $symbol, ?string $accountId = null): InstrumentDto;
+
+    public function getExchanges(): ExchangeCollection;
+
+    public function getClock(): ClockDto;
+
+    public function getSchedule(string $symbol): ScheduleDto;
 
     /**
      * @param list<string> $symbols

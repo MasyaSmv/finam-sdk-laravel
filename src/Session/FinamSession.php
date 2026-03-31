@@ -20,11 +20,14 @@ use MasyaSmv\FinamSdk\Dto\Connect\SessionDetailsDto;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
 use MasyaSmv\FinamSdk\Session\Mapper\CandleMapper;
+use MasyaSmv\FinamSdk\Session\Mapper\ClockMapper;
+use MasyaSmv\FinamSdk\Session\Mapper\ExchangeMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\InstrumentMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\OperationMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\OrderBookMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\OrderMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\QuoteMapper;
+use MasyaSmv\FinamSdk\Session\Mapper\ScheduleMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\SessionDetailsMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\TradeMapper;
 use MasyaSmv\FinamSdk\Session\Service\SessionAccountResolver;
@@ -81,6 +84,9 @@ final class FinamSession implements FinamSessionInterface
                 instrumentApi: $instrumentApi,
                 decoder: $decoder,
                 mapper: new InstrumentMapper($reader),
+                exchangeMapper: new ExchangeMapper($reader),
+                clockMapper: new ClockMapper($reader),
+                scheduleMapper: new ScheduleMapper($reader),
             ),
             marketDataService: new SessionMarketDataService(
                 marketApi: $marketApi,
@@ -130,6 +136,21 @@ final class FinamSession implements FinamSessionInterface
     public function getInstrument(string $symbol, ?string $accountId = null): \MasyaSmv\FinamSdk\Dto\Instrument\InstrumentDto
     {
         return $this->instrumentService->getInstrument($symbol, $accountId);
+    }
+
+    public function getExchanges(): \MasyaSmv\FinamSdk\Collections\ExchangeCollection
+    {
+        return $this->instrumentService->getExchanges();
+    }
+
+    public function getClock(): \MasyaSmv\FinamSdk\Dto\Instrument\ClockDto
+    {
+        return $this->instrumentService->getClock();
+    }
+
+    public function getSchedule(string $symbol): \MasyaSmv\FinamSdk\Dto\Instrument\ScheduleDto
+    {
+        return $this->instrumentService->getSchedule($symbol);
     }
 
     public function getLatestQuotes(array $symbols): \MasyaSmv\FinamSdk\Collections\QuoteCollection
