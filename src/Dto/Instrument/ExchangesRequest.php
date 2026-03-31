@@ -7,7 +7,7 @@ namespace MasyaSmv\FinamSdk\Dto\Instrument;
 final class ExchangesRequest
 {
     /**
-     * @return array<string, mixed>
+     * @return array<never, never>
      */
     public function toQuery(): array
     {

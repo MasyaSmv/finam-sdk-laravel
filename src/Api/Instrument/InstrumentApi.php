@@ -61,7 +61,7 @@ final class InstrumentApi implements InstrumentApiInterface
      */
     public function assetParams(GetAssetParamsRequest $request): ApiResponse
     {
-        return $this->client->get('/assets/asset/params', $request->toQuery());
+        return $this->client->get("/assets/{$request->symbol()}/params", $request->toQuery());
     }
 
     /**
@@ -69,7 +69,7 @@ final class InstrumentApi implements InstrumentApiInterface
      */
     public function optionsChain(OptionsChainRequest $request): ApiResponse
     {
-        return $this->client->get('/assets/options/chain', $request->toQuery());
+        return $this->client->get("/assets/{$request->underlyingSymbol()}/options", $request->toQuery());
     }
 
     /**

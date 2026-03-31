@@ -18,14 +18,17 @@ final class OptionsChainRequest
         }
     }
 
+    public function underlyingSymbol(): string
+    {
+        return $this->underlyingSymbol;
+    }
+
     /**
-     * @return array<string, string>
+     * @return array{root?: string, expiration_date?: string}
      */
     public function toQuery(): array
     {
-        $query = [
-            'underlying_symbol' => $this->underlyingSymbol,
-        ];
+        $query = [];
 
         if ($this->root !== null && $this->root !== '') {
             $query['root'] = $this->root;

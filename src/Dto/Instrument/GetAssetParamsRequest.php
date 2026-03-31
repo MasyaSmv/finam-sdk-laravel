@@ -21,13 +21,17 @@ final class GetAssetParamsRequest
         }
     }
 
+    public function symbol(): string
+    {
+        return $this->symbol;
+    }
+
     /**
-     * @return array<string, string>
+     * @return array{account_id: string}
      */
     public function toQuery(): array
     {
         return [
-            'symbol' => $this->symbol,
             'account_id' => $this->accountId,
         ];
     }

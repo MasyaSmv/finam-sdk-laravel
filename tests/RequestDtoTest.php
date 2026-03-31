@@ -6,6 +6,10 @@ namespace MasyaSmv\FinamSdk\Tests;
 
 use DateTimeImmutable;
 use MasyaSmv\FinamSdk\Dto\Instrument\AssetsRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\ClockRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\ExchangesRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetParamsRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\OptionsChainRequest;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesRequest;
 use MasyaSmv\FinamSdk\Dto\Market\QuotesRequest;
@@ -21,6 +25,46 @@ final class RequestDtoTest extends TestCase
         $request = new AssetsRequest();
 
         $this->assertSame([], $request->toQuery());
+    }
+
+    public function testClockRequestReturnsEmptyQuery(): void
+    {
+        $request = new ClockRequest();
+
+        $this->assertSame([], $request->toQuery());
+    }
+
+    public function testExchangesRequestReturnsEmptyQuery(): void
+    {
+        $request = new ExchangesRequest();
+
+        $this->assertSame([], $request->toQuery());
+    }
+
+    public function testGetAssetParamsRequestMovesSymbolToPathAndKeepsOnlyAccountInQuery(): void
+    {
+        $request = new GetAssetParamsRequest('SBER@MISX', 'account-1');
+
+        $this->assertSame('SBER@MISX', $request->symbol());
+        $this->assertSame(['account_id' => 'account-1'], $request->toQuery());
+    }
+
+    public function testOptionsChainRequestMovesUnderlyingSymbolToPath(): void
+    {
+        $request = new OptionsChainRequest(
+            underlyingSymbol: 'YDEX@MISX',
+            root: 'WEEKLY',
+            expirationDate: '2026-04-03',
+        );
+
+        $this->assertSame('YDEX@MISX', $request->underlyingSymbol());
+        $this->assertSame(
+            [
+                'root' => 'WEEKLY',
+                'expiration_date' => '2026-04-03',
+            ],
+            $request->toQuery(),
+        );
     }
 
     public function testQuotesRequestUsesPathSymbolAndNoQueryParameters(): void

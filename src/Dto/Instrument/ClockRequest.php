@@ -7,7 +7,7 @@ namespace MasyaSmv\FinamSdk\Dto\Instrument;
 final class ClockRequest
 {
     /**
-     * @return array<string, mixed>
+     * @return array<never, never>
      */
     public function toQuery(): array
     {

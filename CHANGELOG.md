@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Aligned instrument asset params and options chain requests with documented Finam REST resource paths
 - Reworked weak request DTOs to use typed constructors instead of raw array input for active market, instrument, and order flows
 - Aligned market quote and candle requests with documented Finam REST resource paths
 - Refined transport integer accessors to normalize numeric strings into a single `int` contract
