@@ -14,6 +14,8 @@ use MasyaSmv\FinamSdk\Dto\Order\OrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrdersRequest;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderRequest;
+use MasyaSmv\FinamSdk\Dto\Order\PlaceSlTpOrderInputDto;
+use MasyaSmv\FinamSdk\Dto\Order\PlaceSlTpOrderRequest;
 use MasyaSmv\FinamSdk\Session\Mapper\OrderMapper;
 final class SessionOrderService implements SessionOrderServiceInterface
 {
@@ -61,6 +63,23 @@ final class SessionOrderService implements SessionOrderServiceInterface
         $data = $this->decoder->extractData(
             $response,
             sprintf('accounts/%s/orders', $resolvedAccountId),
+        );
+
+        return $this->mapper->map($data, $resolvedAccountId);
+    }
+
+    public function placeSlTpOrder(PlaceSlTpOrderInputDto $order, ?string $accountId = null): OrderDto
+    {
+        $resolvedAccountId = $accountId ?? $this->accountResolver->resolveDefaultAccountId();
+        $response = $this->orderApi->placeSlTp(
+            new PlaceSlTpOrderRequest(
+                accountId: $resolvedAccountId,
+                payload: $order,
+            ),
+        );
+        $data = $this->decoder->extractData(
+            $response,
+            sprintf('accounts/%s/orders/sltp', $resolvedAccountId),
         );
 
         return $this->mapper->map($data, $resolvedAccountId);

@@ -10,6 +10,7 @@ use MasyaSmv\FinamSdk\Dto\Order\CancelOrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrdersRequest;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderRequest;
+use MasyaSmv\FinamSdk\Dto\Order\PlaceSlTpOrderRequest;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 
 /**
@@ -43,6 +44,17 @@ final class OrderApi implements OrderApiInterface
     public function place(PlaceOrderRequest $request): ApiResponse
     {
         return $this->client->post("/accounts/{$request->accountId()}/orders", $request->toPayload());
+    }
+
+    /**
+     * Размещение SL/TP заявки.
+     *
+     * REST path выведен по структуре OrdersService (`/accounts/{account_id}/orders/sltp`) и требует
+     * дополнительной сверки по отдельной guide-странице документации.
+     */
+    public function placeSlTp(PlaceSlTpOrderRequest $request): ApiResponse
+    {
+        return $this->client->post("/accounts/{$request->accountId()}/orders/sltp", $request->toPayload());
     }
 
     /**

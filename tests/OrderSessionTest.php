@@ -7,6 +7,7 @@ namespace MasyaSmv\FinamSdk\Tests;
 use MasyaSmv\FinamSdk\Collections\OrderCollection;
 use MasyaSmv\FinamSdk\Dto\Order\OrderDto;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
+use MasyaSmv\FinamSdk\Dto\Order\PlaceSlTpOrderInputDto;
 use MasyaSmv\FinamSdk\Session\FinamSession;
 use MasyaSmv\FinamSdk\Tests\Support\AccountApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\ConnectApiStub;
@@ -69,6 +70,7 @@ final class OrderSessionTest extends TestCase
                 ]),
                 orderResponse: TestApiResponseFactory::fromArray([]),
                 placeResponse: TestApiResponseFactory::fromArray([]),
+                placeSlTpResponse: TestApiResponseFactory::fromArray([]),
             ),
             instrumentApi: new InstrumentApiStub(
                 TestApiResponseFactory::fromArray([]),
@@ -119,6 +121,7 @@ final class OrderSessionTest extends TestCase
                     'meta' => [],
                 ]),
                 placeResponse: TestApiResponseFactory::fromArray([]),
+                placeSlTpResponse: TestApiResponseFactory::fromArray([]),
             ),
             instrumentApi: new InstrumentApiStub(
                 TestApiResponseFactory::fromArray([]),
@@ -166,6 +169,7 @@ final class OrderSessionTest extends TestCase
                     'error' => null,
                     'meta' => [],
                 ]),
+                placeSlTpResponse: TestApiResponseFactory::fromArray([]),
             ),
             instrumentApi: new InstrumentApiStub(
                 TestApiResponseFactory::fromArray([]),
@@ -192,5 +196,62 @@ final class OrderSessionTest extends TestCase
 
         $this->assertSame('ORD-77', $order->orderId());
         $this->assertSame('Test place order', $order->comment());
+    }
+
+    public function testPlaceSlTpOrderReturnsDto(): void
+    {
+        $session = FinamSession::fromApis(
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                ordersResponse: TestApiResponseFactory::fromArray([]),
+                orderResponse: TestApiResponseFactory::fromArray([]),
+                placeResponse: TestApiResponseFactory::fromArray([]),
+                placeSlTpResponse: TestApiResponseFactory::fromArray([
+                    'ok' => true,
+                    'status' => 200,
+                    'data' => [
+                        'order' => [
+                            'order_id' => 'ORD-SLTP-1',
+                            'exec_id' => null,
+                            'status' => 'ORDER_STATUS_ACTIVE',
+                            'account_id' => 'ACC-1',
+                            'symbol' => 'SBER@MISX',
+                            'quantity' => ['value' => '10'],
+                            'side' => 'SIDE_SELL',
+                            'type' => 'ORDER_TYPE_STOP',
+                            'time_in_force' => 'TIME_IN_FORCE_DAY',
+                            'stop_price' => ['value' => '245.00'],
+                            'comment' => 'Protective SLTP',
+                        ],
+                    ],
+                    'error' => null,
+                    'meta' => [],
+                ]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+        );
+
+        $order = $session->placeSlTpOrder(
+            new PlaceSlTpOrderInputDto(
+                symbol: 'SBER@MISX',
+                side: 'SIDE_SELL',
+                quantitySl: '10',
+                slPrice: '245.00',
+                comment: 'Protective SLTP',
+            ),
+            'ACC-1',
+        );
+
+        $this->assertSame('ORD-SLTP-1', $order->orderId());
+        $this->assertSame('245.00', $order->stopPrice());
+        $this->assertSame('Protective SLTP', $order->comment());
     }
 }

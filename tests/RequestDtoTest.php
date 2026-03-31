@@ -20,6 +20,8 @@ use MasyaSmv\FinamSdk\Dto\Order\CancelOrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrdersRequest;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderRequest;
+use MasyaSmv\FinamSdk\Dto\Order\PlaceSlTpOrderInputDto;
+use MasyaSmv\FinamSdk\Dto\Order\PlaceSlTpOrderRequest;
 use MasyaSmv\FinamSdk\Dto\Report\CreateAccountReportInputDto;
 use MasyaSmv\FinamSdk\Dto\Report\CreateAccountReportRequest;
 use MasyaSmv\FinamSdk\Dto\Report\GetAccountReportInfoRequest;
@@ -202,6 +204,48 @@ final class RequestDtoTest extends TestCase
                 'limit_price' => '250.10',
             ],
             $request->toPayload(),
+        );
+    }
+
+    public function testPlaceSlTpOrderRequestBuildsPayloadFromInputDto(): void
+    {
+        $request = new PlaceSlTpOrderRequest(
+            accountId: 'account-1',
+            payload: new PlaceSlTpOrderInputDto(
+                symbol: 'SBER@MISX',
+                side: 'SIDE_SELL',
+                quantitySl: '10',
+                slPrice: '245.00',
+                quantityTp: '10',
+                tpPrice: '260.00',
+                tpGuardSpread: '0.10',
+                comment: 'Protective SLTP',
+            ),
+        );
+
+        $this->assertSame('account-1', $request->accountId());
+        $this->assertSame(
+            [
+                'symbol' => 'SBER@MISX',
+                'side' => 'SIDE_SELL',
+                'quantity_sl' => ['value' => '10'],
+                'sl_price' => ['value' => '245.00'],
+                'quantity_tp' => ['value' => '10'],
+                'tp_price' => ['value' => '260.00'],
+                'tp_guard_spread' => ['value' => '0.10'],
+                'comment' => 'Protective SLTP',
+            ],
+            $request->toPayload(),
+        );
+    }
+
+    public function testPlaceSlTpOrderRequiresAtLeastOneBranch(): void
+    {
+        $this->expectException(InvalidRequestException::class);
+
+        new PlaceSlTpOrderInputDto(
+            symbol: 'SBER@MISX',
+            side: 'SIDE_SELL',
         );
     }
 

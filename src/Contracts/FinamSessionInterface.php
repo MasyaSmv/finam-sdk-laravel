@@ -21,6 +21,7 @@ use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
 use MasyaSmv\FinamSdk\Dto\Market\OrderBookDto;
 use MasyaSmv\FinamSdk\Dto\Order\OrderDto;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
+use MasyaSmv\FinamSdk\Dto\Order\PlaceSlTpOrderInputDto;
 use MasyaSmv\FinamSdk\Dto\Report\AccountReportInfoDto;
 use MasyaSmv\FinamSdk\Dto\Report\CreateAccountReportInputDto;
 use MasyaSmv\FinamSdk\Dto\Report\CreatedAccountReportDto;
@@ -42,6 +43,8 @@ interface FinamSessionInterface
     public function getOrder(string $orderId, ?string $accountId = null): OrderDto;
 
     public function placeOrder(PlaceOrderInputDto $order, ?string $accountId = null): OrderDto;
+
+    public function placeSlTpOrder(PlaceSlTpOrderInputDto $order, ?string $accountId = null): OrderDto;
 
     public function getAllInstruments(?int $cursor = null, bool $onlyActive = false, bool $onlyDisabled = false): AllAssetsPageDto;
 

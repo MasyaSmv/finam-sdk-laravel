@@ -23,6 +23,7 @@ use MasyaSmv\FinamSdk\Contracts\Session\SessionUsageMetricsServiceInterface;
 use MasyaSmv\FinamSdk\Dto\Connect\SessionDetailsDto;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
+use MasyaSmv\FinamSdk\Dto\Order\PlaceSlTpOrderInputDto;
 use MasyaSmv\FinamSdk\Session\Mapper\AllAssetsMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\CandleMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\ClockMapper;
@@ -153,6 +154,13 @@ final class FinamSession implements FinamSessionInterface
     public function placeOrder(PlaceOrderInputDto $order, ?string $accountId = null): \MasyaSmv\FinamSdk\Dto\Order\OrderDto
     {
         return $this->orderService->placeOrder($order, $accountId);
+    }
+
+    public function placeSlTpOrder(
+        PlaceSlTpOrderInputDto $order,
+        ?string $accountId = null,
+    ): \MasyaSmv\FinamSdk\Dto\Order\OrderDto {
+        return $this->orderService->placeSlTpOrder($order, $accountId);
     }
 
     public function getAllInstruments(
