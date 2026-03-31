@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- Aligned usage metrics, session details, asset clock, exchanges, get-asset, and schedule contracts with live Finam REST responses
+- Fixed the default Finam REST base URL to use the live `https://tradeapi.finam.ru/v1` host
+- Switched candle requests to the canonical `/bars/` resource path to avoid the live redirect
 - Added `PlaceSLTPOrder` high-level session flow with dedicated SL/TP input DTO contract
 - Added `ReportsService` high-level session flow for report creation and info lookup with typed DTO contracts
 - Added `UsageMetricsService` high-level session flow with typed wrapper DTO and quota collection

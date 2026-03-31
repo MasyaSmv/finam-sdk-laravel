@@ -172,6 +172,11 @@ final class ApiValueReader
         return $items;
     }
 
+    public function optionalStringList(ApiPayload $data, string $field): ?StringCollection
+    {
+        return $data->stringList($field);
+    }
+
     public function requireObjectList(ApiPayload $data, string $field): ApiPayloadCollection
     {
         $items = $data->objectList($field);

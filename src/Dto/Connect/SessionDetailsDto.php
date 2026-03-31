@@ -12,6 +12,7 @@ final class SessionDetailsDto
     public function __construct(
         private DateTimeImmutable $createdAt,
         private DateTimeImmutable $expiresAt,
+        private StringCollection $mdPermissions,
         private StringCollection $accountIds,
         private bool $readonly,
     ) {
@@ -25,6 +26,11 @@ final class SessionDetailsDto
     public function expiresAt(): DateTimeImmutable
     {
         return $this->expiresAt;
+    }
+
+    public function mdPermissions(): StringCollection
+    {
+        return $this->mdPermissions;
     }
 
     public function accountIds(): StringCollection

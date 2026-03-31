@@ -21,7 +21,12 @@ final class UsageMetricsMapper
         $quotas = [];
 
         foreach ($this->reader->requireObjectList($data, 'quotas')->payloads() as $quotaData) {
-            $quotas[] = new UsageQuotaDto($quotaData);
+            $quotas[] = new UsageQuotaDto(
+                name: $this->reader->requireString($quotaData, 'name'),
+                limit: $this->reader->requireDecimal($quotaData, 'limit'),
+                remaining: $this->reader->requireDecimal($quotaData, 'remaining'),
+                resetTime: $this->reader->requireString($quotaData, 'reset_time'),
+            );
         }
 
         /** @var list<UsageQuotaDto> $quotas */

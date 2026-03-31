@@ -84,7 +84,7 @@ composer update
 
 ```php
 return [
-    'base_url' => 'https://trade-api.finam.ru',
+    'base_url' => 'https://tradeapi.finam.ru/v1',
     'token' => 'your_token_here',
 
     'http' => [

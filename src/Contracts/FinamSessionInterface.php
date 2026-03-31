@@ -52,11 +52,11 @@ interface FinamSessionInterface
 
     public function getInstrument(string $symbol, ?string $accountId = null): InstrumentDto;
 
-    public function getExchanges(): ExchangeCollection;
+    public function getExchanges(?string $accountId = null): ExchangeCollection;
 
     public function getClock(): ClockDto;
 
-    public function getSchedule(string $symbol): ScheduleDto;
+    public function getSchedule(string $symbol, ?string $accountId = null): ScheduleDto;
 
     /**
      * @param list<string> $symbols

@@ -24,6 +24,7 @@ final class SessionDetailsTest extends TestCase
                 'data' => [
                     'created_at' => '2026-03-31T10:00:00+03:00',
                     'expires_at' => '2026-03-31T20:00:00+03:00',
+                    'md_permissions' => ['QUOTE', 'ORDER_BOOK'],
                     'account_ids' => ['ACC-1'],
                     'readonly' => false,
                 ],
@@ -49,6 +50,7 @@ final class SessionDetailsTest extends TestCase
         $details = $session->sessionDetails();
 
         $this->assertSame(['ACC-1'], $details->accountIds()->strings());
+        $this->assertSame(['QUOTE', 'ORDER_BOOK'], $details->mdPermissions()->strings());
         $this->assertFalse($details->readonly());
         $this->assertSame('2026-03-31T10:00:00+03:00', $details->createdAt()->format(DATE_ATOM));
         $this->assertSame('2026-03-31T20:00:00+03:00', $details->expiresAt()->format(DATE_ATOM));

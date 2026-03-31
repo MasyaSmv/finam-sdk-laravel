@@ -29,7 +29,7 @@ use MasyaSmv\FinamSdk\Exceptions\InvalidResponseException;
 
 final class FinamClient
 {
-    public const DEFAULT_BASE_URL = 'https://api.finam.ru/v1/';
+    public const DEFAULT_BASE_URL = 'https://tradeapi.finam.ru/v1/';
 
     private Guzzle $http;
 

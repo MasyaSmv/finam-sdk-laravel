@@ -39,15 +39,16 @@ final class UsageMetricsSessionTest extends TestCase
             usageMetricsApi: new UsageMetricsApiStub(TestApiResponseFactory::fromArray([
                 'ok' => true,
                 'status' => 200,
-                'data' => [
-                    'quotas' => [
-                        [
-                            'name' => 'marketdata_quotes',
-                            'limit' => ['value' => '1000'],
-                            'used' => ['value' => '125'],
+                    'data' => [
+                        'quotas' => [
+                            [
+                                'name' => 'marketdata_quotes',
+                                'limit' => '1000',
+                                'remaining' => '875',
+                                'reset_time' => '2026-04-02T00:00:00Z',
+                            ],
                         ],
                     ],
-                ],
                 'error' => null,
                 'meta' => [],
             ])),
@@ -61,8 +62,9 @@ final class UsageMetricsSessionTest extends TestCase
         $this->assertInstanceOf(UsageMetricsDto::class, $usageMetrics);
         $this->assertInstanceOf(UsageQuotaCollection::class, $usageMetrics->quotas());
         $this->assertNotNull($firstQuota);
-        $this->assertSame('marketdata_quotes', $firstQuota->details()->string('name'));
-        $this->assertSame('1000', $firstQuota->details()->decimalString('limit'));
-        $this->assertSame('125', $firstQuota->details()->decimalString('used'));
+        $this->assertSame('marketdata_quotes', $firstQuota->name());
+        $this->assertSame('1000', $firstQuota->limit());
+        $this->assertSame('875', $firstQuota->remaining());
+        $this->assertSame('2026-04-02T00:00:00Z', $firstQuota->resetTime());
     }
 }

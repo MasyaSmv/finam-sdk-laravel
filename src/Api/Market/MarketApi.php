@@ -26,7 +26,7 @@ final class MarketApi implements MarketApiInterface
      */
     public function candles(CandlesRequest $request): ApiResponse
     {
-        return $this->client->get("/instruments/{$request->symbol()}/bars", $request->toQuery());
+        return $this->client->get("/instruments/{$request->symbol()}/bars/", $request->toQuery());
     }
 
     /**

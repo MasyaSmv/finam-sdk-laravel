@@ -123,7 +123,7 @@ final class InstrumentSessionTest extends TestCase
             ),
         );
 
-        $instrument = $session->getInstrument('GAZP@MISX');
+        $instrument = $session->getInstrument('GAZP@MISX', 'ACC-1');
 
         $this->assertSame('GAZP@MISX', $instrument->symbol());
         $this->assertSame('asset-2', $instrument->id());
@@ -173,7 +173,7 @@ final class InstrumentSessionTest extends TestCase
             ),
         );
 
-        $exchanges = $session->getExchanges();
+        $exchanges = $session->getExchanges('ACC-1');
 
         /** @var ExchangeDto|null $firstExchange */
         $firstExchange = $exchanges->first();
@@ -203,10 +203,7 @@ final class InstrumentSessionTest extends TestCase
                     'ok' => true,
                     'status' => 200,
                     'data' => [
-                        'timestamp' => [
-                            'seconds' => '1775034000',
-                            'nanos' => 123000000,
-                        ],
+                        'timestamp' => '2026-04-01T09:00:00.123Z',
                     ],
                     'error' => null,
                     'meta' => [],
@@ -272,7 +269,7 @@ final class InstrumentSessionTest extends TestCase
             ),
         );
 
-        $schedule = $session->getSchedule('YDEX@MISX');
+        $schedule = $session->getSchedule('YDEX@MISX', 'ACC-1');
 
         /** @var ScheduleSessionDto|null $coreTradingSession */
         $coreTradingSession = $schedule->sessions()->firstByType('CORE_TRADING');

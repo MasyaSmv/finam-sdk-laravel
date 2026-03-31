@@ -17,7 +17,7 @@ final class ClockMapper
     public function map(ApiPayload $data): ClockDto
     {
         return new ClockDto(
-            timestamp: $this->reader->requireTimestamp($data, 'timestamp'),
+            timestamp: $this->reader->parseDateTime($this->reader->requireString($data, 'timestamp'), 'timestamp'),
         );
     }
 }

@@ -13,6 +13,7 @@ use MasyaSmv\FinamSdk\Dto\Instrument\ExchangesRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetParamsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\OptionsChainRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\ScheduleRequest;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesRequest;
 use MasyaSmv\FinamSdk\Dto\Market\QuotesRequest;
@@ -82,11 +83,12 @@ final class RequestDtoTest extends TestCase
         $this->assertSame([], $request->toQuery());
     }
 
-    public function testExchangesRequestReturnsEmptyQuery(): void
+    public function testExchangesRequestBuildsAccountQuery(): void
     {
-        $request = new ExchangesRequest();
+        $request = new ExchangesRequest('account-1');
 
-        $this->assertSame([], $request->toQuery());
+        $this->assertSame('account-1', $request->accountId());
+        $this->assertSame(['account_id' => 'account-1'], $request->toQuery());
     }
 
     public function testGetAssetParamsRequestMovesSymbolToPathAndKeepsOnlyAccountInQuery(): void
@@ -97,12 +99,25 @@ final class RequestDtoTest extends TestCase
         $this->assertSame(['account_id' => 'account-1'], $request->toQuery());
     }
 
-    public function testGetAssetRequestMovesSymbolToPathAndKeepsOptionalAccountInQuery(): void
+    public function testGetAssetRequestMovesSymbolToPathAndKeepsRequiredAccountInQuery(): void
     {
         $request = new GetAssetRequest('GAZP@MISX', 'account-1');
 
         $this->assertSame('GAZP@MISX', $request->symbol());
         $this->assertSame(['account_id' => 'account-1'], $request->toQuery());
+    }
+
+    public function testScheduleRequestBuildsSymbolAndAccountQuery(): void
+    {
+        $request = new ScheduleRequest('YDEX@MISX', 'account-1');
+
+        $this->assertSame(
+            [
+                'symbol' => 'YDEX@MISX',
+                'account_id' => 'account-1',
+            ],
+            $request->toQuery(),
+        );
     }
 
     public function testOptionsChainRequestMovesUnderlyingSymbolToPath(): void
