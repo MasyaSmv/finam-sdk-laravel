@@ -16,6 +16,8 @@ final class MarketApiStub implements MarketApiInterface
     public function __construct(
         private ApiResponse $quotesResponse,
         private ApiResponse $candlesResponse,
+        private ?ApiResponse $orderbookResponse = null,
+        private ?ApiResponse $tradesResponse = null,
     ) {
     }
 
@@ -31,11 +33,11 @@ final class MarketApiStub implements MarketApiInterface
 
     public function orderbook(OrderbookRequest $request): ApiResponse
     {
-        return TestApiResponseFactory::fromArray([]);
+        return $this->orderbookResponse ?? TestApiResponseFactory::fromArray([]);
     }
 
     public function trades(MarketTradesRequest $request): ApiResponse
     {
-        return TestApiResponseFactory::fromArray([]);
+        return $this->tradesResponse ?? TestApiResponseFactory::fromArray([]);
     }
 }

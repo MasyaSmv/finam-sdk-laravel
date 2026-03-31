@@ -22,9 +22,11 @@ use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
 use MasyaSmv\FinamSdk\Session\Mapper\CandleMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\InstrumentMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\OperationMapper;
+use MasyaSmv\FinamSdk\Session\Mapper\OrderBookMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\OrderMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\QuoteMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\SessionDetailsMapper;
+use MasyaSmv\FinamSdk\Session\Mapper\TradeMapper;
 use MasyaSmv\FinamSdk\Session\Service\SessionAccountResolver;
 use MasyaSmv\FinamSdk\Session\Service\SessionDetailsService;
 use MasyaSmv\FinamSdk\Session\Service\SessionInstrumentService;
@@ -85,6 +87,8 @@ final class FinamSession implements FinamSessionInterface
                 decoder: $decoder,
                 quoteMapper: new QuoteMapper($reader),
                 candleMapper: new CandleMapper($reader),
+                orderBookMapper: new OrderBookMapper($reader),
+                tradeMapper: new TradeMapper($reader),
             ),
         );
     }
@@ -136,5 +140,15 @@ final class FinamSession implements FinamSessionInterface
     public function getCandles(CandlesQueryDto $query): \MasyaSmv\FinamSdk\Collections\CandleCollection
     {
         return $this->marketDataService->getCandles($query);
+    }
+
+    public function getOrderBook(string $symbol): \MasyaSmv\FinamSdk\Dto\Market\OrderBookDto
+    {
+        return $this->marketDataService->getOrderBook($symbol);
+    }
+
+    public function getLatestTrades(string $symbol): \MasyaSmv\FinamSdk\Collections\TradeCollection
+    {
+        return $this->marketDataService->getLatestTrades($symbol);
     }
 }

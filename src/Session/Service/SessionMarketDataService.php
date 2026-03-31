@@ -6,15 +6,21 @@ namespace MasyaSmv\FinamSdk\Session\Service;
 
 use MasyaSmv\FinamSdk\Collections\CandleCollection;
 use MasyaSmv\FinamSdk\Collections\QuoteCollection;
+use MasyaSmv\FinamSdk\Collections\TradeCollection;
 use MasyaSmv\FinamSdk\Contracts\Api\MarketApiInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\ApiResponseDecoderInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\SessionMarketDataServiceInterface;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesRequest;
+use MasyaSmv\FinamSdk\Dto\Market\OrderBookDto;
+use MasyaSmv\FinamSdk\Dto\Market\OrderbookRequest;
 use MasyaSmv\FinamSdk\Dto\Market\QuotesRequest;
+use MasyaSmv\FinamSdk\Dto\Market\TradesRequest;
 use MasyaSmv\FinamSdk\Exceptions\InvalidRequestException;
 use MasyaSmv\FinamSdk\Session\Mapper\CandleMapper;
+use MasyaSmv\FinamSdk\Session\Mapper\OrderBookMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\QuoteMapper;
+use MasyaSmv\FinamSdk\Session\Mapper\TradeMapper;
 
 final class SessionMarketDataService implements SessionMarketDataServiceInterface
 {
@@ -23,6 +29,8 @@ final class SessionMarketDataService implements SessionMarketDataServiceInterfac
         private ApiResponseDecoderInterface $decoder,
         private QuoteMapper $quoteMapper,
         private CandleMapper $candleMapper,
+        private OrderBookMapper $orderBookMapper,
+        private TradeMapper $tradeMapper,
     ) {
     }
 
@@ -60,5 +68,35 @@ final class SessionMarketDataService implements SessionMarketDataServiceInterfac
         );
 
         return $this->candleMapper->mapCollection($data);
+    }
+
+    public function getOrderBook(string $symbol): OrderBookDto
+    {
+        if ($symbol === '') {
+            throw new InvalidRequestException('Symbol must not be empty.');
+        }
+
+        $response = $this->marketApi->orderbook(new OrderbookRequest($symbol));
+        $data = $this->decoder->extractData(
+            $response,
+            sprintf('instruments/%s/orderbook', $symbol),
+        );
+
+        return $this->orderBookMapper->map($data);
+    }
+
+    public function getLatestTrades(string $symbol): TradeCollection
+    {
+        if ($symbol === '') {
+            throw new InvalidRequestException('Symbol must not be empty.');
+        }
+
+        $response = $this->marketApi->trades(new TradesRequest($symbol));
+        $data = $this->decoder->extractData(
+            $response,
+            sprintf('instruments/%s/trades/latest', $symbol),
+        );
+
+        return $this->tradeMapper->mapCollection($data);
     }
 }

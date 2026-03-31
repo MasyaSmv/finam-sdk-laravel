@@ -10,9 +10,11 @@ use MasyaSmv\FinamSdk\Collections\InstrumentCollection;
 use MasyaSmv\FinamSdk\Collections\OperationCollection;
 use MasyaSmv\FinamSdk\Collections\OrderCollection;
 use MasyaSmv\FinamSdk\Collections\QuoteCollection;
+use MasyaSmv\FinamSdk\Collections\TradeCollection;
 use MasyaSmv\FinamSdk\Dto\Connect\SessionDetailsDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\InstrumentDto;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
+use MasyaSmv\FinamSdk\Dto\Market\OrderBookDto;
 use MasyaSmv\FinamSdk\Dto\Order\OrderDto;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
 
@@ -43,4 +45,8 @@ interface FinamSessionInterface
     public function getLatestQuotes(array $symbols): QuoteCollection;
 
     public function getCandles(CandlesQueryDto $query): CandleCollection;
+
+    public function getOrderBook(string $symbol): OrderBookDto;
+
+    public function getLatestTrades(string $symbol): TradeCollection;
 }
