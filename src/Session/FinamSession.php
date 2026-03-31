@@ -6,16 +6,29 @@ namespace MasyaSmv\FinamSdk\Session;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use MasyaSmv\FinamSdk\Collections\CandleCollection;
+use MasyaSmv\FinamSdk\Collections\InstrumentCollection;
 use MasyaSmv\FinamSdk\Collections\OperationCollection;
 use MasyaSmv\FinamSdk\Collections\OrderCollection;
+use MasyaSmv\FinamSdk\Collections\QuoteCollection;
 use MasyaSmv\FinamSdk\Contracts\Api\AccountApiInterface;
 use MasyaSmv\FinamSdk\Contracts\Api\ConnectApiInterface;
+use MasyaSmv\FinamSdk\Contracts\Api\InstrumentApiInterface;
+use MasyaSmv\FinamSdk\Contracts\Api\MarketApiInterface;
 use MasyaSmv\FinamSdk\Contracts\Api\OrderApiInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamSessionInterface;
 use MasyaSmv\FinamSdk\Dto\Account\OperationDto;
 use MasyaSmv\FinamSdk\Dto\Account\OperationTradeDto;
 use MasyaSmv\FinamSdk\Dto\Account\TransactionsRequest;
 use MasyaSmv\FinamSdk\Dto\Connect\SessionDetailsDto;
+use MasyaSmv\FinamSdk\Dto\Instrument\AssetsRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\InstrumentDto;
+use MasyaSmv\FinamSdk\Dto\Market\CandleDto;
+use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
+use MasyaSmv\FinamSdk\Dto\Market\CandlesRequest;
+use MasyaSmv\FinamSdk\Dto\Market\QuoteDto;
+use MasyaSmv\FinamSdk\Dto\Market\QuotesRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrderDto;
 use MasyaSmv\FinamSdk\Dto\Order\OrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrdersRequest;
@@ -47,6 +60,8 @@ final class FinamSession implements FinamSessionInterface
         private ConnectApiInterface $connectApi,
         private AccountApiInterface $accountApi,
         private OrderApiInterface $orderApi,
+        private InstrumentApiInterface $instrumentApi,
+        private MarketApiInterface $marketApi,
     ) {
     }
 
@@ -147,6 +162,62 @@ final class FinamSession implements FinamSessionInterface
         return $this->mapOrder($data, $resolvedAccountId);
     }
 
+    public function getInstruments(): InstrumentCollection
+    {
+        /** @var ApiResponse $response */
+        $response = $this->instrumentApi->assets(new AssetsRequest());
+
+        $data = $this->extractResponseData(
+            $response,
+            'assets',
+        );
+
+        return $this->mapInstruments($data);
+    }
+
+    public function getInstrument(string $symbol, ?string $accountId = null): InstrumentDto
+    {
+        /** @var ApiResponse $response */
+        $response = $this->instrumentApi->asset(new GetAssetRequest($symbol, $accountId));
+
+        $data = $this->extractResponseData(
+            $response,
+            'assets/asset',
+        );
+
+        return $this->mapInstrument($data);
+    }
+
+    public function getLatestQuotes(array $symbols): QuoteCollection
+    {
+        if ($symbols === []) {
+            throw new InvalidRequestException('Symbols list must not be empty.');
+        }
+
+        /** @var ApiResponse $response */
+        $response = $this->marketApi->quotes(new QuotesRequest(['symbols' => $symbols]));
+
+        $data = $this->extractResponseData(
+            $response,
+            'market/quotes',
+        );
+
+        return $this->mapQuotes($data);
+    }
+
+    public function getCandles(CandlesQueryDto $query): CandleCollection
+    {
+        /** @var ApiResponse $response */
+        $response = $this->marketApi->candles(new CandlesRequest($query->toQuery()));
+
+        $data = $this->extractResponseData(
+            $response,
+            'market/candles',
+        );
+
+        return $this->mapCandles($data);
+    }
+
     private function resolveDefaultAccountId(): string
     {
         $accountIds = $this->sessionDetails()->accountIds();
@@ -239,6 +310,85 @@ final class FinamSession implements FinamSessionInterface
     }
 
     /**
+     * @param ApiMap $data
+     */
+    private function mapInstruments(array $data): InstrumentCollection
+    {
+        $instruments = [];
+
+        foreach ($this->listOfArrays($data['assets'] ?? null, 'assets') as $asset) {
+            $instruments[] = $this->mapInstrument($asset);
+        }
+
+        /** @var list<InstrumentDto> $instruments */
+        return new InstrumentCollection($instruments);
+    }
+
+    /**
+     * @param ApiMap $data
+     */
+    private function mapInstrument(array $data): InstrumentDto
+    {
+        /** @var ApiMap $instrumentData */
+        $instrumentData = isset($data['asset']) && is_array($data['asset']) ? $data['asset'] : $data;
+
+        return new InstrumentDto(
+            symbol: $this->requireString($instrumentData, 'symbol'),
+            shortName: $this->optionalString($instrumentData, 'short_name')
+                ?? $this->optionalString($instrumentData, 'name')
+                ?? $this->requireString($instrumentData, 'symbol'),
+            description: $this->optionalString($instrumentData, 'description'),
+            market: $this->optionalString($instrumentData, 'market'),
+            currency: $this->optionalString($instrumentData, 'currency'),
+            lotSize: $this->extractOptionalDecimalValue($instrumentData['lot_size'] ?? null, 'lot_size'),
+            isin: $this->optionalString($instrumentData, 'isin'),
+        );
+    }
+
+    /**
+     * @param ApiMap $data
+     */
+    private function mapQuotes(array $data): QuoteCollection
+    {
+        $quotes = [];
+
+        foreach ($this->listOfArrays($data['quotes'] ?? null, 'quotes') as $quoteData) {
+            $quotes[] = new QuoteDto(
+                symbol: $this->requireString($quoteData, 'symbol'),
+                price: $this->extractOptionalDecimalValue($quoteData['price'] ?? null, 'price') ?? '0',
+                change: $this->extractOptionalDecimalValue($quoteData['change'] ?? null, 'change'),
+                percentChange: $this->extractOptionalDecimalValue($quoteData['change_percent'] ?? null, 'change_percent'),
+                timestamp: $this->optionalDateTime($quoteData, 'timestamp'),
+            );
+        }
+
+        /** @var list<QuoteDto> $quotes */
+        return new QuoteCollection($quotes);
+    }
+
+    /**
+     * @param ApiMap $data
+     */
+    private function mapCandles(array $data): CandleCollection
+    {
+        $candles = [];
+
+        foreach ($this->listOfArrays($data['candles'] ?? null, 'candles') as $candleData) {
+            $candles[] = new CandleDto(
+                timestamp: $this->parseDateTime($this->requireString($candleData, 'timestamp'), 'timestamp'),
+                open: $this->extractDecimalValue($this->requireArray($candleData, 'open'), 'open'),
+                high: $this->extractDecimalValue($this->requireArray($candleData, 'high'), 'high'),
+                low: $this->extractDecimalValue($this->requireArray($candleData, 'low'), 'low'),
+                close: $this->extractDecimalValue($this->requireArray($candleData, 'close'), 'close'),
+                volume: $this->extractOptionalDecimalValue($candleData['volume'] ?? null, 'volume'),
+            );
+        }
+
+        /** @var list<CandleDto> $candles */
+        return new CandleCollection($candles);
+    }
+
+    /**
      * @param ApiScalar|ApiNestedArray $value
      */
     private function mapTrade($value): ?OperationTradeDto
@@ -283,11 +433,18 @@ final class FinamSession implements FinamSessionInterface
             $headers = $this->headerMap($response['meta']['headers'] ?? null);
             /** @var ApiMap|null $errorPayload */
             $errorPayload = is_array($response['error'] ?? null) ? $response['error'] : null;
+            $finamMessage = $this->resolveFinamMessage($errorPayload);
+            $finamCode = $this->resolveFinamCode($errorPayload);
             $message = $this->resolveApiErrorMessage($endpoint, $errorPayload);
 
             throw new ApiHttpException(
                 message: $message,
                 httpStatus: $status,
+                endpoint: $endpoint,
+                requestId: $this->resolveRequestId($headers, $errorPayload),
+                finamCode: $finamCode,
+                finamMessage: $finamMessage,
+                requestContext: $this->requestContext($response),
                 headers: $headers,
                 errorPayload: $errorPayload,
                 rawBody: $this->optionalString($errorPayload ?? [], 'raw'),
@@ -531,21 +688,112 @@ final class FinamSession implements FinamSessionInterface
      */
     private function resolveApiErrorMessage(string $endpoint, ?array $errorPayload): string
     {
-        if ($errorPayload !== null) {
-            $message = $this->firstStringByKeys($errorPayload, ['message', 'error', 'description', 'detail']);
+        $message = $this->resolveFinamMessage($errorPayload);
 
-            if ($message !== null) {
-                $code = $this->firstStringByKeys($errorPayload, ['code', 'error_code']);
+        if ($message !== null) {
+            $code = $this->resolveFinamCode($errorPayload);
 
-                if ($code !== null && $code !== '') {
-                    return sprintf('[%s] %s', $code, $message);
-                }
-
-                return $message;
+            if ($code !== null && $code !== '') {
+                return sprintf('[%s] %s', $code, $message);
             }
+
+            return $message;
         }
 
         return sprintf('Finam API request failed for endpoint "%s".', $endpoint);
+    }
+
+    /**
+     * @param ApiMap|null $errorPayload
+     */
+    private function resolveFinamMessage(?array $errorPayload): ?string
+    {
+        if ($errorPayload === null) {
+            return null;
+        }
+
+        return $this->firstStringByKeys($errorPayload, ['message', 'error', 'description', 'detail']);
+    }
+
+    /**
+     * @param ApiMap|null $errorPayload
+     */
+    private function resolveFinamCode(?array $errorPayload): ?string
+    {
+        if ($errorPayload === null) {
+            return null;
+        }
+
+        return $this->firstStringByKeys($errorPayload, ['code', 'error_code']);
+    }
+
+    /**
+     * @param HeaderMap $headers
+     * @param ApiMap|null $errorPayload
+     */
+    private function resolveRequestId(array $headers, ?array $errorPayload): ?string
+    {
+        $requestId = $this->firstHeaderValueByNames($headers, ['x-request-id', 'x-correlation-id', 'request-id']);
+
+        if ($requestId !== null) {
+            return $requestId;
+        }
+
+        if ($errorPayload === null) {
+            return null;
+        }
+
+        return $this->firstStringByKeys($errorPayload, ['request_id', 'correlation_id']);
+    }
+
+    /**
+     * @param ApiResponse $response
+     *
+     * @return array<string, scalar|array<int|string, scalar|null>|null>
+     */
+    private function requestContext(array $response): array
+    {
+        $meta = $response['meta'] ?? null;
+
+        if (!is_array($meta)) {
+            return [];
+        }
+
+        $request = $meta['request'] ?? null;
+
+        if (!is_array($request)) {
+            return [];
+        }
+
+        /** @var array<string, scalar|array<int|string, scalar|null>|null> $request */
+        $request = $request;
+
+        $context = [];
+
+        foreach ($request as $key => $value) {
+            if (!is_string($key)) {
+                continue;
+            }
+
+            if (is_scalar($value) || $value === null) {
+                $context[$key] = $value;
+                continue;
+            }
+
+            if (is_array($value)) {
+                $nested = [];
+
+                foreach ($value as $nestedKey => $nestedValue) {
+                    if ((is_int($nestedKey) || is_string($nestedKey)) && is_scalar($nestedValue)) {
+                        $nested[$nestedKey] = $nestedValue;
+                    }
+                }
+
+                $context[$key] = $nested;
+            }
+        }
+
+        return $context;
     }
 
     /**
@@ -559,6 +807,29 @@ final class FinamSession implements FinamSessionInterface
 
             if (is_string($value) && $value !== '') {
                 return $value;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param HeaderMap $headers
+     * @param list<string> $names
+     */
+    private function firstHeaderValueByNames(array $headers, array $names): ?string
+    {
+        foreach ($names as $name) {
+            foreach ($headers as $headerName => $values) {
+                if (mb_strtolower($headerName) !== $name) {
+                    continue;
+                }
+
+                foreach ($values as $value) {
+                    if ($value !== '') {
+                        return $value;
+                    }
+                }
             }
         }
 

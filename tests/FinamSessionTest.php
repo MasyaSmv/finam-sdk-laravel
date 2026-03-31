@@ -5,15 +5,35 @@ declare(strict_types=1);
 namespace MasyaSmv\FinamSdk\Tests;
 
 use DateTimeImmutable;
+use MasyaSmv\FinamSdk\Collections\CandleCollection;
+use MasyaSmv\FinamSdk\Collections\InstrumentCollection;
 use MasyaSmv\FinamSdk\Collections\OperationCollection;
 use MasyaSmv\FinamSdk\Collections\OrderCollection;
+use MasyaSmv\FinamSdk\Collections\QuoteCollection;
 use MasyaSmv\FinamSdk\Contracts\Api\AccountApiInterface;
 use MasyaSmv\FinamSdk\Contracts\Api\ConnectApiInterface;
+use MasyaSmv\FinamSdk\Contracts\Api\InstrumentApiInterface;
+use MasyaSmv\FinamSdk\Contracts\Api\MarketApiInterface;
 use MasyaSmv\FinamSdk\Contracts\Api\OrderApiInterface;
 use MasyaSmv\FinamSdk\Dto\Account\GetAccountRequest;
 use MasyaSmv\FinamSdk\Dto\Account\OperationDto;
 use MasyaSmv\FinamSdk\Dto\Account\TradesRequest;
 use MasyaSmv\FinamSdk\Dto\Account\TransactionsRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\AssetsRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\ClockRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\ExchangesRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetParamsRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\GetAssetRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\InstrumentDto;
+use MasyaSmv\FinamSdk\Dto\Instrument\OptionsChainRequest;
+use MasyaSmv\FinamSdk\Dto\Instrument\ScheduleRequest;
+use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
+use MasyaSmv\FinamSdk\Dto\Market\CandlesRequest;
+use MasyaSmv\FinamSdk\Dto\Market\CandleDto;
+use MasyaSmv\FinamSdk\Dto\Market\OrderbookRequest;
+use MasyaSmv\FinamSdk\Dto\Market\QuoteDto;
+use MasyaSmv\FinamSdk\Dto\Market\QuotesRequest;
+use MasyaSmv\FinamSdk\Dto\Market\TradesRequest as MarketTradesRequest;
 use MasyaSmv\FinamSdk\Dto\Order\CancelOrderRequest;
 use MasyaSmv\FinamSdk\Dto\Order\OrderDto;
 use MasyaSmv\FinamSdk\Dto\Order\OrderRequest;
@@ -125,6 +145,97 @@ final class OrderApiStub implements OrderApiInterface
  * @phpstan-type TestNestedArray array<int|string, TestScalar|array<int|string, TestScalar|array<int|string, TestScalar|array<int|string, TestScalar>>>>
  * @phpstan-type TestResponse array<string, TestScalar|TestNestedArray>
  */
+final class InstrumentApiStub implements InstrumentApiInterface
+{
+    /**
+     * @param TestResponse $assetsResponse
+     * @param TestResponse $assetResponse
+     */
+    public function __construct(
+        private array $assetsResponse,
+        private array $assetResponse,
+    ) {
+    }
+
+    public function assets(AssetsRequest $request): array
+    {
+        return $this->assetsResponse;
+    }
+
+    public function clock(ClockRequest $request): array
+    {
+        return [];
+    }
+
+    public function exchanges(ExchangesRequest $request): array
+    {
+        return [];
+    }
+
+    public function asset(GetAssetRequest $request): array
+    {
+        return $this->assetResponse;
+    }
+
+    public function assetParams(GetAssetParamsRequest $request): array
+    {
+        return [];
+    }
+
+    public function optionsChain(OptionsChainRequest $request): array
+    {
+        return [];
+    }
+
+    public function schedule(ScheduleRequest $request): array
+    {
+        return [];
+    }
+}
+
+/**
+ * @phpstan-type TestScalar null|bool|int|float|string
+ * @phpstan-type TestNestedArray array<int|string, TestScalar|array<int|string, TestScalar|array<int|string, TestScalar|array<int|string, TestScalar>>>>
+ * @phpstan-type TestResponse array<string, TestScalar|TestNestedArray>
+ */
+final class MarketApiStub implements MarketApiInterface
+{
+    /**
+     * @param TestResponse $quotesResponse
+     * @param TestResponse $candlesResponse
+     */
+    public function __construct(
+        private array $quotesResponse,
+        private array $candlesResponse,
+    ) {
+    }
+
+    public function candles(CandlesRequest $request): array
+    {
+        return $this->candlesResponse;
+    }
+
+    public function quotes(QuotesRequest $request): array
+    {
+        return $this->quotesResponse;
+    }
+
+    public function orderbook(OrderbookRequest $request): array
+    {
+        return [];
+    }
+
+    public function trades(MarketTradesRequest $request): array
+    {
+        return [];
+    }
+}
+
+/**
+ * @phpstan-type TestScalar null|bool|int|float|string
+ * @phpstan-type TestNestedArray array<int|string, TestScalar|array<int|string, TestScalar|array<int|string, TestScalar|array<int|string, TestScalar>>>>
+ * @phpstan-type TestResponse array<string, TestScalar|TestNestedArray>
+ */
 final class FinamSessionTest extends TestCase
 {
     public function testSessionDetailsAreMappedToDto(): void
@@ -144,6 +255,8 @@ final class FinamSessionTest extends TestCase
             ]),
             accountApi: new AccountApiStub([]),
             orderApi: new OrderApiStub([], [], []),
+            instrumentApi: new InstrumentApiStub([], []),
+            marketApi: new MarketApiStub([], []),
         );
 
         $details = $session->sessionDetails();
@@ -202,6 +315,8 @@ final class FinamSessionTest extends TestCase
                 'meta' => [],
             ]),
             orderApi: new OrderApiStub([], [], []),
+            instrumentApi: new InstrumentApiStub([], []),
+            marketApi: new MarketApiStub([], []),
         );
 
         $operations = $session->getOperationsByDate(
@@ -254,6 +369,8 @@ final class FinamSessionTest extends TestCase
                 'meta' => [],
             ]),
             orderApi: new OrderApiStub([], [], []),
+            instrumentApi: new InstrumentApiStub([], []),
+            marketApi: new MarketApiStub([], []),
         );
 
         $operations = $session->getOperationsByDate(
@@ -281,6 +398,8 @@ final class FinamSessionTest extends TestCase
             ]),
             accountApi: new AccountApiStub([]),
             orderApi: new OrderApiStub([], [], []),
+            instrumentApi: new InstrumentApiStub([], []),
+            marketApi: new MarketApiStub([], []),
         );
 
         $this->expectException(AccountResolutionException::class);
@@ -301,19 +420,36 @@ final class FinamSessionTest extends TestCase
                 'error' => [
                     'message' => 'Token is invalid',
                     'code' => 'AUTH-403',
+                    'request_id' => 'req-403',
                 ],
                 'meta' => [
-                    'headers' => [],
+                    'headers' => [
+                        'x-request-id' => ['req-403'],
+                    ],
+                    'request' => [
+                        'method' => 'POST',
+                        'uri' => 'sessions/details',
+                        'attempt' => 1,
+                    ],
                 ],
             ]),
             accountApi: new AccountApiStub([]),
             orderApi: new OrderApiStub([], [], []),
+            instrumentApi: new InstrumentApiStub([], []),
+            marketApi: new MarketApiStub([], []),
         );
 
-        $this->expectException(ApiHttpException::class);
-        $this->expectExceptionMessage('[AUTH-403] Token is invalid');
-
-        $session->sessionDetails();
+        try {
+            $session->sessionDetails();
+            $this->fail('Expected ApiHttpException was not thrown.');
+        } catch (ApiHttpException $exception) {
+            $this->assertSame('[AUTH-403] Token is invalid', $exception->getMessage());
+            $this->assertSame('AUTH-403', $exception->finamCode);
+            $this->assertSame('Token is invalid', $exception->finamMessage);
+            $this->assertSame('req-403', $exception->requestId);
+            $this->assertSame('sessions/details', $exception->endpoint);
+            $this->assertSame('POST', $exception->requestContext['method'] ?? null);
+        }
     }
 
     public function testGetOrdersReturnsTypedCollection(): void
@@ -369,6 +505,8 @@ final class FinamSessionTest extends TestCase
                 orderResponse: [],
                 placeResponse: [],
             ),
+            instrumentApi: new InstrumentApiStub([], []),
+            marketApi: new MarketApiStub([], []),
         );
 
         $orders = $session->getOrders('ACC-1');
@@ -411,6 +549,8 @@ final class FinamSessionTest extends TestCase
                 ],
                 placeResponse: [],
             ),
+            instrumentApi: new InstrumentApiStub([], []),
+            marketApi: new MarketApiStub([], []),
         );
 
         $order = $session->getOrder('ORD-10', 'ACC-1');
@@ -450,6 +590,8 @@ final class FinamSessionTest extends TestCase
                     'meta' => [],
                 ],
             ),
+            instrumentApi: new InstrumentApiStub([], []),
+            marketApi: new MarketApiStub([], []),
         );
 
         $order = $session->placeOrder(
@@ -467,5 +609,164 @@ final class FinamSessionTest extends TestCase
 
         $this->assertSame('ORD-77', $order->orderId());
         $this->assertSame('Test place order', $order->comment());
+    }
+
+    public function testGetInstrumentsReturnsTypedCollection(): void
+    {
+        $session = new FinamSession(
+            connectApi: new ConnectApiStub([]),
+            accountApi: new AccountApiStub([]),
+            orderApi: new OrderApiStub([], [], []),
+            instrumentApi: new InstrumentApiStub(
+                assetsResponse: [
+                    'ok' => true,
+                    'status' => 200,
+                    'data' => [
+                        'assets' => [
+                            [
+                                'symbol' => 'SBER@MISX',
+                                'short_name' => 'Sber',
+                                'description' => 'Sberbank',
+                                'market' => 'MISX',
+                                'currency' => 'RUB',
+                                'lot_size' => ['value' => '10'],
+                                'isin' => 'RU0009029540',
+                            ],
+                        ],
+                    ],
+                    'error' => null,
+                    'meta' => [],
+                ],
+                assetResponse: [],
+            ),
+            marketApi: new MarketApiStub([], []),
+        );
+
+        $instruments = $session->getInstruments();
+
+        /** @var InstrumentDto|null $firstInstrument */
+        $firstInstrument = $instruments->first();
+
+        $this->assertInstanceOf(InstrumentCollection::class, $instruments);
+        $this->assertSame('SBER@MISX', $firstInstrument?->symbol());
+        $this->assertSame('SBER@MISX', $instruments->findBySymbol('SBER@MISX')?->symbol());
+    }
+
+    public function testGetInstrumentReturnsDto(): void
+    {
+        $session = new FinamSession(
+            connectApi: new ConnectApiStub([]),
+            accountApi: new AccountApiStub([]),
+            orderApi: new OrderApiStub([], [], []),
+            instrumentApi: new InstrumentApiStub(
+                assetsResponse: [],
+                assetResponse: [
+                    'ok' => true,
+                    'status' => 200,
+                    'data' => [
+                        'asset' => [
+                            'symbol' => 'GAZP@MISX',
+                            'short_name' => 'Gazprom',
+                            'description' => 'Gazprom PJSC',
+                            'market' => 'MISX',
+                            'currency' => 'RUB',
+                        ],
+                    ],
+                    'error' => null,
+                    'meta' => [],
+                ],
+            ),
+            marketApi: new MarketApiStub([], []),
+        );
+
+        $instrument = $session->getInstrument('GAZP@MISX');
+
+        $this->assertSame('GAZP@MISX', $instrument->symbol());
+        $this->assertSame('Gazprom', $instrument->shortName());
+    }
+
+    public function testGetLatestQuotesReturnsTypedCollection(): void
+    {
+        $session = new FinamSession(
+            connectApi: new ConnectApiStub([]),
+            accountApi: new AccountApiStub([]),
+            orderApi: new OrderApiStub([], [], []),
+            instrumentApi: new InstrumentApiStub([], []),
+            marketApi: new MarketApiStub(
+                quotesResponse: [
+                    'ok' => true,
+                    'status' => 200,
+                    'data' => [
+                        'quotes' => [
+                            [
+                                'symbol' => 'SBER@MISX',
+                                'price' => ['value' => '250.10'],
+                                'change' => ['value' => '1.20'],
+                                'change_percent' => ['value' => '0.48'],
+                                'timestamp' => '2026-03-31T12:00:00+03:00',
+                            ],
+                        ],
+                    ],
+                    'error' => null,
+                    'meta' => [],
+                ],
+                candlesResponse: [],
+            ),
+        );
+
+        $quotes = $session->getLatestQuotes(['SBER@MISX']);
+
+        /** @var QuoteDto|null $firstQuote */
+        $firstQuote = $quotes->first();
+
+        $this->assertInstanceOf(QuoteCollection::class, $quotes);
+        $this->assertSame('250.10', $firstQuote?->price());
+        $this->assertSame('SBER@MISX', $quotes->findBySymbol('SBER@MISX')?->symbol());
+    }
+
+    public function testGetCandlesReturnsTypedCollection(): void
+    {
+        $session = new FinamSession(
+            connectApi: new ConnectApiStub([]),
+            accountApi: new AccountApiStub([]),
+            orderApi: new OrderApiStub([], [], []),
+            instrumentApi: new InstrumentApiStub([], []),
+            marketApi: new MarketApiStub(
+                quotesResponse: [],
+                candlesResponse: [
+                    'ok' => true,
+                    'status' => 200,
+                    'data' => [
+                        'candles' => [
+                            [
+                                'timestamp' => '2026-03-31T10:00:00+03:00',
+                                'open' => ['value' => '100.0'],
+                                'high' => ['value' => '105.0'],
+                                'low' => ['value' => '99.0'],
+                                'close' => ['value' => '104.5'],
+                                'volume' => ['value' => '10000'],
+                            ],
+                        ],
+                    ],
+                    'error' => null,
+                    'meta' => [],
+                ],
+            ),
+        );
+
+        $candles = $session->getCandles(
+            new CandlesQueryDto(
+                symbol: 'SBER@MISX',
+                timeframe: 'TIMEFRAME_M1',
+                startDate: new DateTimeImmutable('2026-03-31T10:00:00+03:00'),
+                endDate: new DateTimeImmutable('2026-03-31T11:00:00+03:00'),
+            ),
+        );
+
+        /** @var CandleDto|null $firstCandle */
+        $firstCandle = $candles->first();
+
+        $this->assertInstanceOf(CandleCollection::class, $candles);
+        $this->assertSame('104.5', $firstCandle?->close());
     }
 }
