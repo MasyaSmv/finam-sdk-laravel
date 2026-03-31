@@ -50,7 +50,7 @@ jobs:
 
       - name: Static analysis (Psalm)
         if: matrix.dependencies == 'prefer-stable'
-        run: composer psalm
+        run: php -dpcov.enabled=0 vendor/bin/psalm --config=psalm.xml.dist --no-progress
 
       - name: Run tests
         run: composer test

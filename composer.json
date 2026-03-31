@@ -82,7 +82,7 @@
     "test": "@php vendor/bin/phpunit",
     "test:coverage": "@php vendor/bin/phpunit --coverage-text",
     "analyse": "@php vendor/bin/phpstan analyse --configuration=phpstan.neon.dist --no-progress --debug",
-    "psalm": "@php vendor/bin/psalm --config=psalm.xml.dist --no-progress",
+    "psalm": "@php -dpcov.enabled=0 vendor/bin/psalm --config=psalm.xml.dist --no-progress",
     "ci": [
       "@analyse",
       "@psalm",
