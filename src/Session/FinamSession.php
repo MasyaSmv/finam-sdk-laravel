@@ -10,12 +10,14 @@ use MasyaSmv\FinamSdk\Contracts\Api\ConnectApiInterface;
 use MasyaSmv\FinamSdk\Contracts\Api\InstrumentApiInterface;
 use MasyaSmv\FinamSdk\Contracts\Api\MarketApiInterface;
 use MasyaSmv\FinamSdk\Contracts\Api\OrderApiInterface;
+use MasyaSmv\FinamSdk\Contracts\Api\UsageMetricsApiInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamSessionInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\SessionDetailsServiceInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\SessionInstrumentServiceInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\SessionMarketDataServiceInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\SessionOperationServiceInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\SessionOrderServiceInterface;
+use MasyaSmv\FinamSdk\Contracts\Session\SessionUsageMetricsServiceInterface;
 use MasyaSmv\FinamSdk\Dto\Connect\SessionDetailsDto;
 use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
@@ -31,14 +33,17 @@ use MasyaSmv\FinamSdk\Session\Mapper\QuoteMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\ScheduleMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\SessionDetailsMapper;
 use MasyaSmv\FinamSdk\Session\Mapper\TradeMapper;
+use MasyaSmv\FinamSdk\Session\Mapper\UsageMetricsMapper;
 use MasyaSmv\FinamSdk\Session\Service\SessionAccountResolver;
 use MasyaSmv\FinamSdk\Session\Service\SessionDetailsService;
 use MasyaSmv\FinamSdk\Session\Service\SessionInstrumentService;
 use MasyaSmv\FinamSdk\Session\Service\SessionMarketDataService;
 use MasyaSmv\FinamSdk\Session\Service\SessionOperationService;
 use MasyaSmv\FinamSdk\Session\Service\SessionOrderService;
+use MasyaSmv\FinamSdk\Session\Service\SessionUsageMetricsService;
 use MasyaSmv\FinamSdk\Session\Support\ApiResponseDecoder;
 use MasyaSmv\FinamSdk\Session\Support\ApiValueReader;
+use MasyaSmv\FinamSdk\Api\UsageMetrics\UnsupportedUsageMetricsApi;
 
 final class FinamSession implements FinamSessionInterface
 {
@@ -48,6 +53,7 @@ final class FinamSession implements FinamSessionInterface
         private SessionOrderServiceInterface $orderService,
         private SessionInstrumentServiceInterface $instrumentService,
         private SessionMarketDataServiceInterface $marketDataService,
+        private SessionUsageMetricsServiceInterface $usageMetricsService,
     ) {
     }
 
@@ -57,6 +63,7 @@ final class FinamSession implements FinamSessionInterface
         OrderApiInterface $orderApi,
         InstrumentApiInterface $instrumentApi,
         MarketApiInterface $marketApi,
+        ?UsageMetricsApiInterface $usageMetricsApi = null,
     ): self {
         $reader = new ApiValueReader();
         $decoder = new ApiResponseDecoder($reader);
@@ -98,6 +105,11 @@ final class FinamSession implements FinamSessionInterface
                 candleMapper: new CandleMapper($reader),
                 orderBookMapper: new OrderBookMapper($reader),
                 tradeMapper: new TradeMapper($reader),
+            ),
+            usageMetricsService: new SessionUsageMetricsService(
+                usageMetricsApi: $usageMetricsApi ?? new UnsupportedUsageMetricsApi(),
+                decoder: $decoder,
+                mapper: new UsageMetricsMapper($reader),
             ),
         );
     }
@@ -182,5 +194,10 @@ final class FinamSession implements FinamSessionInterface
     public function getLatestTrades(string $symbol): \MasyaSmv\FinamSdk\Collections\TradeCollection
     {
         return $this->marketDataService->getLatestTrades($symbol);
+    }
+
+    public function getUsageMetrics(): \MasyaSmv\FinamSdk\Dto\UsageMetrics\UsageMetricsDto
+    {
+        return $this->usageMetricsService->getUsageMetrics();
     }
 }

@@ -21,6 +21,7 @@ use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
 use MasyaSmv\FinamSdk\Dto\Market\OrderBookDto;
 use MasyaSmv\FinamSdk\Dto\Order\OrderDto;
 use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
+use MasyaSmv\FinamSdk\Dto\UsageMetrics\UsageMetricsDto;
 
 interface FinamSessionInterface
 {
@@ -61,4 +62,6 @@ interface FinamSessionInterface
     public function getOrderBook(string $symbol): OrderBookDto;
 
     public function getLatestTrades(string $symbol): TradeCollection;
+
+    public function getUsageMetrics(): UsageMetricsDto;
 }

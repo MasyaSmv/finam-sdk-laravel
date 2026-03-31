@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Added `UsageMetricsService` high-level session flow with typed wrapper DTO and quota collection
 - Added `AuthService` token issuance flow via `Finam::issueToken($secret)` with typed DTO and facade support
 - Added paginated `AllAssets` session flow with typed page DTO and cursor contract
 - Added typed asset exchange, clock, and schedule session flows with dedicated DTO and collection contracts
