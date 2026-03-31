@@ -17,10 +17,16 @@ final class ApiHttpException extends FinamSdkException
     /**
      * @param array<string, array<int, string>> $headers
      * @param ApiMap|null $errorPayload
+     * @param array<string, scalar|array<int|string, scalar|null>|null> $requestContext
      */
     public function __construct(
         string $message,
         public int $httpStatus,
+        public string $endpoint = '',
+        public ?string $requestId = null,
+        public ?string $finamCode = null,
+        public ?string $finamMessage = null,
+        public array $requestContext = [],
         public array $headers = [],
         public ?array $errorPayload = null,
         public ?string $rawBody = null,
