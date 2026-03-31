@@ -7,13 +7,20 @@ namespace MasyaSmv\FinamSdk\Session;
 use DateTimeImmutable;
 use DateTimeInterface;
 use MasyaSmv\FinamSdk\Collections\OperationCollection;
+use MasyaSmv\FinamSdk\Collections\OrderCollection;
 use MasyaSmv\FinamSdk\Contracts\Api\AccountApiInterface;
 use MasyaSmv\FinamSdk\Contracts\Api\ConnectApiInterface;
+use MasyaSmv\FinamSdk\Contracts\Api\OrderApiInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamSessionInterface;
 use MasyaSmv\FinamSdk\Dto\Account\OperationDto;
 use MasyaSmv\FinamSdk\Dto\Account\OperationTradeDto;
 use MasyaSmv\FinamSdk\Dto\Account\TransactionsRequest;
 use MasyaSmv\FinamSdk\Dto\Connect\SessionDetailsDto;
+use MasyaSmv\FinamSdk\Dto\Order\OrderDto;
+use MasyaSmv\FinamSdk\Dto\Order\OrderRequest;
+use MasyaSmv\FinamSdk\Dto\Order\OrdersRequest;
+use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
+use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderRequest;
 use MasyaSmv\FinamSdk\Dto\Shared\Interval;
 use MasyaSmv\FinamSdk\Dto\Shared\MoneyDto;
 use MasyaSmv\FinamSdk\Exceptions\AccountResolutionException;
@@ -39,6 +46,7 @@ final class FinamSession implements FinamSessionInterface
     public function __construct(
         private ConnectApiInterface $connectApi,
         private AccountApiInterface $accountApi,
+        private OrderApiInterface $orderApi,
     ) {
     }
 
@@ -89,6 +97,56 @@ final class FinamSession implements FinamSessionInterface
         return $this->mapOperations($data, $resolvedAccountId);
     }
 
+    public function getOrders(?string $accountId = null): OrderCollection
+    {
+        $resolvedAccountId = $accountId ?? $this->resolveDefaultAccountId();
+
+        /** @var ApiResponse $response */
+        $response = $this->orderApi->orders(new OrdersRequest($resolvedAccountId));
+
+        $data = $this->extractResponseData(
+            $response,
+            sprintf('accounts/%s/orders', $resolvedAccountId),
+        );
+
+        return $this->mapOrders($data, $resolvedAccountId);
+    }
+
+    public function getOrder(string $orderId, ?string $accountId = null): OrderDto
+    {
+        $resolvedAccountId = $accountId ?? $this->resolveDefaultAccountId();
+
+        /** @var ApiResponse $response */
+        $response = $this->orderApi->order(new OrderRequest($resolvedAccountId, $orderId));
+
+        $data = $this->extractResponseData(
+            $response,
+            sprintf('accounts/%s/orders/%s', $resolvedAccountId, $orderId),
+        );
+
+        return $this->mapOrder($data, $resolvedAccountId);
+    }
+
+    public function placeOrder(PlaceOrderInputDto $order, ?string $accountId = null): OrderDto
+    {
+        $resolvedAccountId = $accountId ?? $this->resolveDefaultAccountId();
+
+        /** @var ApiResponse $response */
+        $response = $this->orderApi->place(
+            new PlaceOrderRequest(
+                accountId: $resolvedAccountId,
+                payload: $order->toPayload(),
+            ),
+        );
+
+        $data = $this->extractResponseData(
+            $response,
+            sprintf('accounts/%s/orders', $resolvedAccountId),
+        );
+
+        return $this->mapOrder($data, $resolvedAccountId);
+    }
+
     private function resolveDefaultAccountId(): string
     {
         $accountIds = $this->sessionDetails()->accountIds();
@@ -132,6 +190,52 @@ final class FinamSession implements FinamSessionInterface
 
         /** @var list<OperationDto> $operations */
         return new OperationCollection($operations);
+    }
+
+    /**
+     * @param ApiMap $data
+     */
+    private function mapOrders(array $data, string $accountId): OrderCollection
+    {
+        $orders = [];
+
+        foreach ($this->listOfArrays($data['orders'] ?? null, 'orders') as $orderData) {
+            $orders[] = $this->mapOrder($orderData, $accountId);
+        }
+
+        /** @var list<OrderDto> $orders */
+        return new OrderCollection($orders);
+    }
+
+    /**
+     * @param ApiMap $data
+     */
+    private function mapOrder(array $data, string $accountId): OrderDto
+    {
+        /** @var ApiMap $orderData */
+        $orderData = isset($data['order']) && is_array($data['order']) ? $data['order'] : $data;
+
+        return new OrderDto(
+            orderId: $this->requireString($orderData, 'order_id'),
+            execId: $this->optionalString($orderData, 'exec_id'),
+            status: $this->requireString($orderData, 'status'),
+            accountId: $this->optionalString($orderData, 'account_id') ?? $accountId,
+            symbol: $this->requireString($orderData, 'symbol'),
+            quantity: $this->extractDecimalValue($this->requireArray($orderData, 'quantity'), 'quantity'),
+            side: $this->requireString($orderData, 'side'),
+            type: $this->requireString($orderData, 'type'),
+            timeInForce: $this->requireString($orderData, 'time_in_force'),
+            clientOrderId: $this->optionalString($orderData, 'client_order_id'),
+            comment: $this->optionalString($orderData, 'comment'),
+            limitPrice: $this->extractOptionalDecimalValue($orderData['limit_price'] ?? null, 'limit_price'),
+            stopPrice: $this->extractOptionalDecimalValue($orderData['stop_price'] ?? null, 'stop_price'),
+            transactAt: $this->optionalDateTime($orderData, 'transact_at'),
+            acceptAt: $this->optionalDateTime($orderData, 'accept_at'),
+            withdrawAt: $this->optionalDateTime($orderData, 'withdraw_at'),
+            initialQuantity: $this->extractOptionalDecimalValue($orderData['initial_quantity'] ?? null, 'initial_quantity'),
+            executedQuantity: $this->extractOptionalDecimalValue($orderData['executed_quantity'] ?? null, 'executed_quantity'),
+            remainingQuantity: $this->extractOptionalDecimalValue($orderData['remaining_quantity'] ?? null, 'remaining_quantity'),
+        );
     }
 
     /**
@@ -216,6 +320,20 @@ final class FinamSession implements FinamSessionInterface
 
     /**
      * @param ApiMap $data
+     */
+    private function optionalDateTime(array $data, string $field): ?DateTimeImmutable
+    {
+        $value = $this->optionalString($data, $field);
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return $this->parseDateTime($value, $field);
+    }
+
+    /**
+     * @param ApiMap $data
      *
      * @return ApiMap
      */
@@ -296,6 +414,34 @@ final class FinamSession implements FinamSessionInterface
         }
 
         return $value;
+    }
+
+    /**
+     * @param ApiMap $data
+     */
+    private function extractDecimalValue(array $data, string $field): string
+    {
+        return $this->requireString($data, 'value');
+    }
+
+    /**
+     * @param ApiScalar|ApiNestedArray $value
+     */
+    private function extractOptionalDecimalValue($value, string $field): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_string($value)) {
+            return $value;
+        }
+
+        if (!is_array($value)) {
+            throw new ResponseMappingException(sprintf('Field "%s" must be a decimal object or string.', $field));
+        }
+
+        return $this->requireString($value, 'value');
     }
 
     /**

@@ -30,7 +30,7 @@ final class OrderApi implements OrderApiInterface
      */
     public function orders(OrdersRequest $request): array
     {
-        return $this->client->get('/orders', $request->toQuery());
+        return $this->client->get("/accounts/{$request->accountId()}/orders", $request->toQuery());
     }
 
     /**
@@ -42,7 +42,7 @@ final class OrderApi implements OrderApiInterface
      */
     public function order(OrderRequest $request): array
     {
-        return $this->client->get("/orders/{$request->orderId()}");
+        return $this->client->get("/accounts/{$request->accountId()}/orders/{$request->orderId()}");
     }
 
     /**
@@ -54,7 +54,7 @@ final class OrderApi implements OrderApiInterface
      */
     public function place(PlaceOrderRequest $request): array
     {
-        return $this->client->post('/orders', $request->toPayload());
+        return $this->client->post("/accounts/{$request->accountId()}/orders", $request->toPayload());
     }
 
     /**
@@ -66,7 +66,10 @@ final class OrderApi implements OrderApiInterface
      */
     public function cancel(CancelOrderRequest $request): array
     {
-        return $this->client->post("/orders/{$request->orderId()}/cancel", $request->toPayload());
+        return $this->client->post(
+            "/accounts/{$request->accountId()}/orders/{$request->orderId()}/cancel",
+            $request->toPayload(),
+        );
     }
 
     /**
@@ -78,6 +81,9 @@ final class OrderApi implements OrderApiInterface
      */
     public function replace(ReplaceOrderRequest $request): array
     {
-        return $this->client->post("/orders/{$request->orderId()}/replace", $request->toPayload());
+        return $this->client->post(
+            "/accounts/{$request->accountId()}/orders/{$request->orderId()}/replace",
+            $request->toPayload(),
+        );
     }
 }

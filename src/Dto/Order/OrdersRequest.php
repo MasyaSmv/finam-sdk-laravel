@@ -9,8 +9,19 @@ final class OrdersRequest
     /**
      * @param array<string, mixed> $query
      */
-    public function __construct(private array $query = [])
+    public function __construct(
+        private string $accountId,
+        private array $query = [],
+    )
     {
+        if ($this->accountId === '') {
+            throw new \MasyaSmv\FinamSdk\Exceptions\InvalidRequestException('AccountId must not be empty.');
+        }
+    }
+
+    public function accountId(): string
+    {
+        return $this->accountId;
     }
 
     /**

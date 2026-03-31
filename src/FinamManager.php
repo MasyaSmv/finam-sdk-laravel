@@ -23,6 +23,7 @@ final class FinamManager implements FinamManagerInterface
         return new FinamSession(
             connectApi: $client->connect(),
             accountApi: $client->account(),
+            orderApi: $client->order(),
         );
     }
 
