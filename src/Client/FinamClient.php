@@ -334,18 +334,33 @@ final class FinamClient
     }
 
     /**
-     * @param array<string, list<string>> $headers
+     * @param array<array-key, array<array-key, string>> $headers
      * @param array<string, mixed> $options
      */
     private function meta(array $headers, string $method, string $uri, array $options, int $attempt): ApiMeta
     {
+        $normalizedHeaders = [];
+
+        foreach ($headers as $name => $values) {
+            if (!is_string($name)) {
+                continue;
+            }
+
+            $normalizedHeaders[$name] = array_values(
+                array_filter(
+                    $values,
+                    static fn ($value): bool => is_string($value),
+                ),
+            );
+        }
+
         /** @var array<string, scalar|array<int|string, scalar|null>> $query */
         $query = is_array($options['query'] ?? null) ? $options['query'] : [];
         /** @var array<string, scalar|array<int|string, scalar|null>> $payload */
         $payload = is_array($options['json'] ?? null) ? $options['json'] : [];
 
         return new ApiMeta(
-            headers: new ApiHeaders($headers),
+            headers: new ApiHeaders($normalizedHeaders),
             request: new ApiRequestContext(
                 method: $method,
                 uri: $uri,
