@@ -21,6 +21,7 @@ use MasyaSmv\FinamSdk\Auth\TokenProviderInterface;
 use MasyaSmv\FinamSdk\Client\FinamClient;
 use MasyaSmv\FinamSdk\Client\FinamClientFactory;
 use MasyaSmv\FinamSdk\Contracts\AuthServiceInterface;
+use MasyaSmv\FinamSdk\Contracts\FinamSessionInterface;
 use MasyaSmv\FinamSdk\Dto\Auth\IssuedTokenDto;
 use MasyaSmv\FinamSdk\Dto\Config\FinamConfig;
 use MasyaSmv\FinamSdk\Dto\Config\FinamHttpConfig;
@@ -201,7 +202,7 @@ final class ClientCoverageTest extends TestCase
         $factory = new FinamClientFactory($config);
         $client = $factory->withTokenProvider($provider);
         $auth = $this->createMock(AuthServiceInterface::class);
-        $auth->expects($this->once())
+        $auth->expects($this->exactly(2))
             ->method('issueToken')
             ->with('secret')
             ->willReturn(new IssuedTokenDto('secret-jwt'));
@@ -210,6 +211,7 @@ final class ClientCoverageTest extends TestCase
         $this->assertSame('token', $provider->getToken());
         $this->assertSame('token', $client->getAccessToken());
         $this->assertSame('secret-jwt', $manager->issueToken('secret')->token());
+        $this->assertInstanceOf(FinamSessionInterface::class, $manager->connectSecret('secret'));
         $this->assertInstanceOf(FinamClient::class, $manager->client('runtime-token'));
     }
 

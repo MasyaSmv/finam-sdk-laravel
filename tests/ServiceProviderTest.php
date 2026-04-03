@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace MasyaSmv\FinamSdk\Tests;
 
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
+use MasyaSmv\FinamSdk\Api\Auth\AuthApi;
 use MasyaSmv\FinamSdk\Client\FinamClient;
+use MasyaSmv\FinamSdk\Auth\AuthService;
 use MasyaSmv\FinamSdk\Contracts\AuthServiceInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamManagerInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamSessionInterface;
@@ -25,20 +27,20 @@ final class ServiceProviderTest extends TestCase
     /**
      * Конфиг пакета должен быть доступен сразу после регистрации провайдера.
      */
-    public function test_config_is_available(): void
+    public function testConfigIsAvailable(): void
     {
         $this->assertSame('https://example.test', config('finam.base_url'));
         $this->assertSame(3.0, config('finam.http.timeout'));
     }
 
-    public function test_client_factory_is_bound_in_container(): void
+    public function testClientFactoryIsBoundInContainer(): void
     {
         $factory = $this->app->make(FinamClientFactory::class);
 
         $this->assertInstanceOf(FinamClientFactory::class, $factory);
     }
 
-    public function test_manager_can_create_runtime_client(): void
+    public function testManagerCanCreateRuntimeClient(): void
     {
         /** @var FinamManagerInterface $manager */
         $manager = $this->app->make(FinamManagerInterface::class);
@@ -48,28 +50,28 @@ final class ServiceProviderTest extends TestCase
         $this->assertSame('runtime-token', $client->getAccessToken());
     }
 
-    public function test_manager_is_bound(): void
+    public function testManagerIsBound(): void
     {
         $manager = $this->app->make(FinamManagerInterface::class);
 
         $this->assertInstanceOf(FinamManagerInterface::class, $manager);
     }
 
-    public function test_auth_service_is_bound(): void
+    public function testAuthServiceIsBound(): void
     {
         $service = $this->app->make(AuthServiceInterface::class);
 
         $this->assertInstanceOf(AuthServiceInterface::class, $service);
     }
 
-    public function test_finam_alias_is_bound(): void
+    public function testFinamAliasIsBound(): void
     {
         $manager = $this->app->make('finam');
 
         $this->assertInstanceOf(FinamManagerInterface::class, $manager);
     }
 
-    public function test_typed_config_is_resolved(): void
+    public function testTypedConfigIsResolved(): void
     {
         /** @var FinamConfig $config */
         $config = $this->app->make(FinamConfig::class);
@@ -82,7 +84,7 @@ final class ServiceProviderTest extends TestCase
         $this->assertSame('finam-sdk-tests', $config->http()->userAgent());
     }
 
-    public function test_typed_config_uses_defaults_for_invalid_scalar_shapes(): void
+    public function testTypedConfigUsesDefaultsForInvalidScalarShapes(): void
     {
         $this->app->forgetInstance(FinamConfig::class);
         /** @var ConfigRepository $config */
@@ -107,14 +109,29 @@ final class ServiceProviderTest extends TestCase
         $this->assertSame('finam-sdk-laravel', $config->http()->userAgent());
     }
 
-    public function test_facade_connect_returns_session(): void
+    public function testFacadeConnectReturnsSession(): void
     {
         $session = Finam::connect('runtime-token');
 
         $this->assertInstanceOf(FinamSessionInterface::class, $session);
     }
 
-    public function test_facade_client_requires_runtime_token(): void
+    public function testFacadeConnectSecretIsForwardedToManager(): void
+    {
+        $session = $this->createMock(FinamSessionInterface::class);
+        $manager = $this->createMock(FinamManagerInterface::class);
+        $manager->expects($this->once())
+            ->method('connectSecret')
+            ->with('secret-token')
+            ->willReturn($session);
+
+        $this->app->instance('finam', $manager);
+        Finam::clearResolvedInstance('finam');
+
+        $this->assertSame($session, Finam::connectSecret('secret-token'));
+    }
+
+    public function testFacadeClientRequiresRuntimeToken(): void
     {
         $client = Finam::client('runtime-token');
 
@@ -122,7 +139,7 @@ final class ServiceProviderTest extends TestCase
         $this->assertSame('runtime-token', $client->getAccessToken());
     }
 
-    public function test_provider_boot_registers_publish_path_and_declares_provides(): void
+    public function testProviderBootRegistersPublishPathAndDeclaresProvides(): void
     {
         $provider = new FinamSdkServiceProvider($this->app);
         $provider->boot();
@@ -137,5 +154,56 @@ final class ServiceProviderTest extends TestCase
 
         $paths = FinamSdkServiceProvider::pathsToPublish(FinamSdkServiceProvider::class, 'finam-config');
         $this->assertContains($this->app->configPath('finam.php'), $paths);
+    }
+
+    public function testProviderRegisterCanBeCalledDirectly(): void
+    {
+        $provider = new FinamSdkServiceProvider($this->app);
+        $provider->register();
+
+        $this->assertInstanceOf(FinamManagerInterface::class, $this->app->make(FinamManagerInterface::class));
+    }
+
+    public function testProviderPrivateHelpersAreCovered(): void
+    {
+        $provider = new FinamSdkServiceProvider($this->app);
+
+        $configPath = new \ReflectionMethod(FinamSdkServiceProvider::class, 'configPath');
+        $configPath->setAccessible(true);
+        $stringConfig = new \ReflectionMethod(FinamSdkServiceProvider::class, 'stringConfig');
+        $stringConfig->setAccessible(true);
+        $floatConfig = new \ReflectionMethod(FinamSdkServiceProvider::class, 'floatConfig');
+        $floatConfig->setAccessible(true);
+        $intConfig = new \ReflectionMethod(FinamSdkServiceProvider::class, 'intConfig');
+        $intConfig->setAccessible(true);
+
+        $this->assertStringEndsWith('/config/finam.php', $configPath->invoke($provider));
+        $this->assertSame('value', $stringConfig->invoke($provider, ['key' => 'value'], 'key', 'default'));
+        $this->assertSame('default', $stringConfig->invoke($provider, ['key' => ['bad']], 'key', 'default'));
+        $this->assertSame(2.5, $floatConfig->invoke($provider, ['key' => '2.5'], 'key', 1.0));
+        $this->assertSame(1.0, $floatConfig->invoke($provider, ['key' => ['bad']], 'key', 1.0));
+        $this->assertSame(3, $intConfig->invoke($provider, ['key' => '3'], 'key', 1));
+        $this->assertSame(1, $intConfig->invoke($provider, ['key' => ['bad']], 'key', 1));
+    }
+
+    public function testAuthServiceBindingUsesEmptyTokenProviderForSecretFlow(): void
+    {
+        $service = $this->app->make(AuthServiceInterface::class);
+
+        $authApiProperty = new \ReflectionProperty(AuthService::class, 'authApi');
+        $authApiProperty->setAccessible(true);
+        /** @var AuthApi $authApi */
+        $authApi = $authApiProperty->getValue($service);
+
+        $clientProperty = new \ReflectionProperty(AuthApi::class, 'client');
+        $clientProperty->setAccessible(true);
+        /** @var FinamClient $client */
+        $client = $clientProperty->getValue($authApi);
+
+        $providerProperty = new \ReflectionProperty(FinamClient::class, 'tokenProvider');
+        $providerProperty->setAccessible(true);
+        $provider = $providerProperty->getValue($client);
+
+        $this->assertSame('', $provider->getToken());
     }
 }

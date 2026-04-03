@@ -25,6 +25,13 @@ final class FinamManager implements FinamManagerInterface
         return $this->authService->issueToken($secret);
     }
 
+    public function connectSecret(string $secret): FinamSessionInterface
+    {
+        $token = $this->issueToken($secret)->token();
+
+        return $this->connect($token);
+    }
+
     public function connect(string $token): FinamSessionInterface
     {
         $client = $this->factory->withToken($token);

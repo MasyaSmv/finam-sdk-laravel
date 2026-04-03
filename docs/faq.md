@@ -15,10 +15,16 @@
 1. `Finam::issueToken($secret)`
 2. `Finam::connect($token)`
 
+Если не нужен ручной контроль над промежуточным токеном, можно короче:
+
+1. `Finam::connectSecret($secret)`
+
 ## Когда использовать `Finam::connect($token)`?
 
 Почти всегда.  
 Это основной и самый удобный способ работы с пакетом.
+
+Если у тебя на входе именно `secret`, то ещё удобнее использовать `Finam::connectSecret($secret)`.
 
 ## Когда использовать `Finam::client($token)`?
 

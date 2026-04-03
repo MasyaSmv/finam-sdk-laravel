@@ -1,6 +1,17 @@
 # Быстрый старт
 
-## Самый частый сценарий
+## Самый короткий сценарий
+
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$session = Finam::connectSecret($secret);
+
+$details = $session->sessionDetails();
+$quotes = $session->getLatestQuotes(['SBER@MISX', 'GAZP@MISX']);
+```
+
+## Явный двухшаговый сценарий
 
 1. Получаешь session token из secret
 2. Подключаешь `Finam::connect($token)`
@@ -22,6 +33,8 @@ use MasyaSmv\FinamSdk\Facades\Finam;
 
 $session = Finam::connect($token);
 ```
+
+Если тебе не нужен отдельный контроль над токеном, можно заменить шаги 1 и 2 одним вызовом `Finam::connectSecret($secret)`.
 
 ## Шаг 3. Проверить сессию
 

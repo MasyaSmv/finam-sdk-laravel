@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## v1.1.0 - 2026-04-03
+- Added `Finam::connectSecret($secret)` as a high-level shortcut that issues a session token internally and returns a ready-to-use session
+
 ## v1.0.0 - 2026-04-03
 - Expanded end-user documentation: refreshed README, added package docs pages for installation, quick start, session API, low-level client, errors, and FAQ
 - Added full automated coverage for the current SDK codebase and expanded regression tests around transport, DTO, client, and facade/session flows

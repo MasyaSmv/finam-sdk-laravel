@@ -26,6 +26,7 @@ PHP SDK для Finam Trade API с удобной работой через Larav
 ## Что уже умеет пакет
 
 - выпуск session token через `Finam::issueToken($secret)`
+- подключение через secret одной командой: `Finam::connectSecret($secret)`
 - подключение сессии через `Finam::connect($token)`
 - низкоуровневый клиент через `Finam::client($token)`
 - операции по счёту
@@ -55,20 +56,24 @@ composer require masyasmv/finam-sdk-laravel
 
 ## Быстрый старт
 
-### 1. Получить session token из secret
+### Самый короткий путь
+
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$session = Finam::connectSecret($secret);
+
+$details = $session->sessionDetails();
+$accountIds = $details->accountIds();
+```
+
+### Если нужен явный двухшаговый flow
 
 ```php
 use MasyaSmv\FinamSdk\Facades\Finam;
 
 $issued = Finam::issueToken($secret);
 $sessionToken = $issued->token();
-```
-
-### 2. Подключить session API
-
-```php
-use MasyaSmv\FinamSdk\Facades\Finam;
-
 $session = Finam::connect($sessionToken);
 
 $details = $session->sessionDetails();
@@ -245,6 +250,7 @@ if ($response->ok()) {
 Токен всегда передаётся явно в runtime:
 
 - `Finam::issueToken($secret)`
+- `Finam::connectSecret($secret)`
 - `Finam::connect($token)`
 - `Finam::client($token)`
 
@@ -294,6 +300,11 @@ php artisan vendor:publish --tag=finam-config
 - `getAccountReportInfo($reportId)`
 
 Все эти методы возвращают DTO или typed collections.
+
+Для входа в high-level API есть два варианта:
+
+- короткий shortcut: `Finam::connectSecret($secret)`
+- явный вариант: `Finam::issueToken($secret)` и потом `Finam::connect($token)`
 
 ## Typed collections
 

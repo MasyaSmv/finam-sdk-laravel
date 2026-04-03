@@ -14,7 +14,11 @@ use MasyaSmv\FinamSdk\Dto\Instrument\ExchangeDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\InstrumentDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\ScheduleDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\ScheduleSessionDto;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiPayload;
+use MasyaSmv\FinamSdk\Exceptions\ResponseMappingException;
 use MasyaSmv\FinamSdk\Session\FinamSession;
+use MasyaSmv\FinamSdk\Session\Mapper\InstrumentMapper;
+use MasyaSmv\FinamSdk\Session\Support\ApiValueReader;
 use MasyaSmv\FinamSdk\Tests\Support\AccountApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\ConnectApiStub;
 use MasyaSmv\FinamSdk\Tests\Support\InstrumentApiStub;
@@ -24,6 +28,36 @@ use MasyaSmv\FinamSdk\Tests\Support\TestApiResponseFactory;
 
 final class InstrumentSessionTest extends TestCase
 {
+    public function testInstrumentMapperMapsCollectionAndTickerOnlySymbolFallback(): void
+    {
+        $mapper = new InstrumentMapper(new ApiValueReader());
+
+        $collection = $mapper->mapCollection(new ApiPayload([
+            'assets' => [
+                [
+                    'ticker' => 'IMOEX',
+                    'type' => 'ASSET_TYPE_INDEX',
+                    'name' => 'MOEX Index',
+                ],
+            ],
+        ]));
+
+        $instrument = $mapper->map(new ApiPayload([
+            'ticker' => 'IMOEX',
+            'type' => 'ASSET_TYPE_INDEX',
+            'name' => 'MOEX Index',
+        ]));
+
+        $this->assertInstanceOf(InstrumentCollection::class, $collection);
+        $this->assertSame('IMOEX', $collection->first()?->symbol());
+        $this->assertSame('IMOEX', $instrument->symbol());
+
+        $this->expectException(ResponseMappingException::class);
+        $mapper->map(new ApiPayload([
+            'name' => 'Instrument without symbol and ticker',
+        ]));
+    }
+
     public function testGetInstrumentsReturnsTypedCollection(): void
     {
         $session = FinamSession::fromApis(

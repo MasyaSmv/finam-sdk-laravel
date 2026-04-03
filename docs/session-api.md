@@ -8,6 +8,14 @@ use MasyaSmv\FinamSdk\Facades\Finam;
 $session = Finam::connect($token);
 ```
 
+Или короче:
+
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$session = Finam::connectSecret($secret);
+```
+
 Ниже собраны основные методы.
 
 ## Сессия
