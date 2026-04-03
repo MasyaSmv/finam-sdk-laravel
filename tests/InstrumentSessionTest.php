@@ -49,7 +49,9 @@ final class InstrumentSessionTest extends TestCase
         ]));
 
         $this->assertInstanceOf(InstrumentCollection::class, $collection);
-        $this->assertSame('IMOEX', $collection->first()?->symbol());
+        /** @var InstrumentDto|null $firstInstrument */
+        $firstInstrument = $collection->first();
+        $this->assertSame('IMOEX', $firstInstrument?->symbol());
         $this->assertSame('IMOEX', $instrument->symbol());
 
         $this->expectException(ResponseMappingException::class);

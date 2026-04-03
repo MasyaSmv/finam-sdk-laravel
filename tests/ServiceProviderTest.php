@@ -177,7 +177,9 @@ final class ServiceProviderTest extends TestCase
         $intConfig = new \ReflectionMethod(FinamSdkServiceProvider::class, 'intConfig');
         $intConfig->setAccessible(true);
 
-        $this->assertStringEndsWith('/config/finam.php', $configPath->invoke($provider));
+        /** @var string $resolvedConfigPath */
+        $resolvedConfigPath = $configPath->invoke($provider);
+        $this->assertStringEndsWith('/config/finam.php', $resolvedConfigPath);
         $this->assertSame('value', $stringConfig->invoke($provider, ['key' => 'value'], 'key', 'default'));
         $this->assertSame('default', $stringConfig->invoke($provider, ['key' => ['bad']], 'key', 'default'));
         $this->assertSame(2.5, $floatConfig->invoke($provider, ['key' => '2.5'], 'key', 1.0));
@@ -188,6 +190,7 @@ final class ServiceProviderTest extends TestCase
 
     public function testAuthServiceBindingUsesEmptyTokenProviderForSecretFlow(): void
     {
+        /** @var AuthServiceInterface $service */
         $service = $this->app->make(AuthServiceInterface::class);
 
         $authApiProperty = new \ReflectionProperty(AuthService::class, 'authApi');
@@ -202,6 +205,7 @@ final class ServiceProviderTest extends TestCase
 
         $providerProperty = new \ReflectionProperty(FinamClient::class, 'tokenProvider');
         $providerProperty->setAccessible(true);
+        /** @var \MasyaSmv\FinamSdk\Auth\TokenProviderInterface $provider */
         $provider = $providerProperty->getValue($client);
 
         $this->assertSame('', $provider->getToken());
