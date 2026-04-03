@@ -8,7 +8,6 @@ final class FinamConfig
 {
     public function __construct(
         private string $baseUrl,
-        private string $token,
         private FinamHttpConfig $http,
     ) {
     }
@@ -16,11 +15,6 @@ final class FinamConfig
     public function baseUrl(): string
     {
         return $this->baseUrl;
-    }
-
-    public function token(): string
-    {
-        return $this->token;
     }
 
     public function http(): FinamHttpConfig

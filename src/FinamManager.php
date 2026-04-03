@@ -40,12 +40,8 @@ final class FinamManager implements FinamManagerInterface
         );
     }
 
-    public function client(?string $token = null): FinamClient
+    public function client(string $token): FinamClient
     {
-        if ($token === null) {
-            return $this->factory->default();
-        }
-
         return $this->factory->withToken($token);
     }
 }

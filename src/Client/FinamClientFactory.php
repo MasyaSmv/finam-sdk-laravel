@@ -15,11 +15,6 @@ final class FinamClientFactory
     ) {
     }
 
-    public function default(): FinamClient
-    {
-        return $this->makeWithProvider(new StaticTokenProvider($this->config->token()));
-    }
-
     public function withToken(string $token): FinamClient
     {
         return $this->makeWithProvider(new StaticTokenProvider($token));

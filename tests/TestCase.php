@@ -44,7 +44,6 @@ abstract class TestCase extends Orchestra
         $config = $app['config'];
 
         $config->set('finam.base_url', 'https://example.test');
-        $config->set('finam.token', 'test-token');
         $config->set('finam.http.timeout', 3.0);
         $config->set('finam.http.connect_timeout', 1.0);
         $config->set('finam.http.retries', 1);

@@ -12,7 +12,7 @@ use MasyaSmv\FinamSdk\Contracts\FinamSessionInterface;
 /**
  * @method static IssuedTokenDto issueToken(string $secret)
  * @method static FinamSessionInterface connect(string $token)
- * @method static FinamClient client(?string $token = null)
+ * @method static FinamClient client(string $token)
  *
  * @see \MasyaSmv\FinamSdk\FinamManager
  */

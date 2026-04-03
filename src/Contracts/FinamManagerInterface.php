@@ -13,5 +13,5 @@ interface FinamManagerInterface
 
     public function connect(string $token): FinamSessionInterface;
 
-    public function client(?string $token = null): FinamClient;
+    public function client(string $token): FinamClient;
 }

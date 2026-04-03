@@ -7,11 +7,8 @@ namespace MasyaSmv\FinamSdk;
 use MasyaSmv\FinamSdk\Auth\AuthService;
 use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\ServiceProvider;
-use MasyaSmv\FinamSdk\Auth\StaticTokenProvider;
-use MasyaSmv\FinamSdk\Auth\TokenProviderInterface;
 use MasyaSmv\FinamSdk\Client\FinamClient;
 use MasyaSmv\FinamSdk\Client\FinamClientFactory;
-use MasyaSmv\FinamSdk\Contracts\Api\AuthApiInterface;
 use MasyaSmv\FinamSdk\Contracts\AuthServiceInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamManagerInterface;
 use MasyaSmv\FinamSdk\Dto\Config\FinamConfig;
@@ -34,7 +31,6 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
 
             return new FinamConfig(
                 baseUrl: $this->stringConfig($cfg, 'base_url', FinamClient::DEFAULT_BASE_URL),
-                token: $this->stringConfig($cfg, 'token', ''),
                 http: new FinamHttpConfig(
                     timeout: $this->floatConfig($http, 'timeout', 10.0),
                     connectTimeout: $this->floatConfig($http, 'connect_timeout', 5.0),
@@ -43,13 +39,6 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
                     userAgent: $this->stringConfig($http, 'user_agent', 'finam-sdk-laravel'),
                 ),
             );
-        });
-
-        $this->app->bind(TokenProviderInterface::class, function ($app): TokenProviderInterface {
-            /** @var FinamConfig $config */
-            $config = $app->make(FinamConfig::class);
-
-            return new StaticTokenProvider($config->token());
         });
 
         $this->app->singleton(FinamClientFactory::class, function ($app): FinamClientFactory {
@@ -73,13 +62,6 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
             );
         });
 
-        $this->app->bind(FinamClient::class, function ($app): FinamClient {
-            /** @var FinamClientFactory $factory */
-            $factory = $app->make(FinamClientFactory::class);
-
-            return $factory->default();
-        });
-
         $this->app->singleton(FinamManagerInterface::class, function ($app): FinamManager {
             /** @var FinamClientFactory $factory */
             $factory = $app->make(FinamClientFactory::class);
@@ -90,7 +72,6 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
         });
 
         $this->app->alias(FinamManagerInterface::class, 'finam');
-        $this->app->alias(FinamClient::class, 'finam.sdk');
     }
 
     public function boot(): void
@@ -106,14 +87,11 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
     public function provides(): array
     {
         return [
-            TokenProviderInterface::class,
             FinamConfig::class,
             FinamClientFactory::class,
             AuthServiceInterface::class,
-            FinamClient::class,
             FinamManagerInterface::class,
             'finam',
-            'finam.sdk',
         ];
     }
 
