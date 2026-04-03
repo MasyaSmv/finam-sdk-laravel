@@ -16,13 +16,12 @@ final class CandlesRequest
     }
 
     /**
-     * @return array{timeframe: string, interval: array<string, int>}
+     * @return array{timeframe: string, 'interval.startTime': string, 'interval.endTime': string}
      */
     public function toQuery(): array
     {
-        return [
+        return array_merge([
             'timeframe' => $this->query->timeframe(),
-            'interval' => $this->query->interval()->toArray(),
-        ];
+        ], $this->query->interval()->toRestQuery());
     }
 }

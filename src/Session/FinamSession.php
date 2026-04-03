@@ -182,9 +182,9 @@ final class FinamSession implements FinamSessionInterface
         return $this->instrumentService->getInstrument($symbol, $accountId);
     }
 
-    public function getExchanges(?string $accountId = null): \MasyaSmv\FinamSdk\Collections\ExchangeCollection
+    public function getExchanges(): \MasyaSmv\FinamSdk\Collections\ExchangeCollection
     {
-        return $this->instrumentService->getExchanges($accountId);
+        return $this->instrumentService->getExchanges();
     }
 
     public function getClock(): \MasyaSmv\FinamSdk\Dto\Instrument\ClockDto
@@ -192,12 +192,9 @@ final class FinamSession implements FinamSessionInterface
         return $this->instrumentService->getClock();
     }
 
-    public function getSchedule(
-        string $symbol,
-        ?string $accountId = null,
-    ): \MasyaSmv\FinamSdk\Dto\Instrument\ScheduleDto
+    public function getSchedule(string $symbol): \MasyaSmv\FinamSdk\Dto\Instrument\ScheduleDto
     {
-        return $this->instrumentService->getSchedule($symbol, $accountId);
+        return $this->instrumentService->getSchedule($symbol);
     }
 
     public function getLatestQuotes(array $symbols): \MasyaSmv\FinamSdk\Collections\QuoteCollection

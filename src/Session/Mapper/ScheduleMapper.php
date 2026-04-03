@@ -22,13 +22,17 @@ final class ScheduleMapper
 
         foreach ($this->reader->requireObjectList($data, 'sessions')->payloads() as $sessionData) {
             $interval = $this->reader->requireObject($sessionData, 'interval');
-            $startTime = $this->reader->requireObject($interval, 'start_time');
-            $endTime = $this->reader->requireObject($interval, 'end_time');
 
             $sessions[] = new ScheduleSessionDto(
                 type: $this->reader->requireString($sessionData, 'type'),
-                startAt: $this->reader->timestampFromPayload($startTime, 'start_time'),
-                endAt: $this->reader->timestampFromPayload($endTime, 'end_time'),
+                startAt: $this->reader->parseDateTime(
+                    $this->reader->requireString($interval, 'start_time'),
+                    'start_time',
+                ),
+                endAt: $this->reader->parseDateTime(
+                    $this->reader->requireString($interval, 'end_time'),
+                    'end_time',
+                ),
             );
         }
 

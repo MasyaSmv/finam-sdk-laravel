@@ -48,13 +48,10 @@ final class OrderApi implements OrderApiInterface
 
     /**
      * Размещение SL/TP заявки.
-     *
-     * REST path выведен по структуре OrdersService (`/accounts/{account_id}/orders/sltp`) и требует
-     * дополнительной сверки по отдельной guide-странице документации.
      */
     public function placeSlTp(PlaceSlTpOrderRequest $request): ApiResponse
     {
-        return $this->client->post("/accounts/{$request->accountId()}/orders/sltp", $request->toPayload());
+        return $this->client->post("/accounts/{$request->accountId()}/sltp-orders", $request->toPayload());
     }
 
     /**

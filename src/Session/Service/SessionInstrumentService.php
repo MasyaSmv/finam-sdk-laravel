@@ -12,7 +12,6 @@ use MasyaSmv\FinamSdk\Contracts\Session\SessionAccountResolverInterface;
 use MasyaSmv\FinamSdk\Contracts\Session\SessionInstrumentServiceInterface;
 use MasyaSmv\FinamSdk\Dto\Instrument\AllAssetsPageDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\AllAssetsRequest;
-use MasyaSmv\FinamSdk\Dto\Instrument\AssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ClockDto;
 use MasyaSmv\FinamSdk\Dto\Instrument\ClockRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ExchangesRequest;
@@ -53,10 +52,22 @@ final class SessionInstrumentService implements SessionInstrumentServiceInterfac
 
     public function getInstruments(): InstrumentCollection
     {
-        $response = $this->instrumentApi->assets(new AssetsRequest());
-        $data = $this->decoder->extractData($response, 'assets');
+        $cursor = null;
+        $items = [];
 
-        return $this->mapper->mapCollection($data);
+        do {
+            $response = $this->instrumentApi->allAssets(new AllAssetsRequest($cursor));
+            $data = $this->decoder->extractData($response, 'assets/all');
+            $page = $this->allAssetsMapper->map($data);
+
+            foreach ($page->assets()->all() as $instrument) {
+                $items[] = $instrument;
+            }
+
+            $cursor = $page->nextCursor();
+        } while ($cursor !== null);
+
+        return new InstrumentCollection($items);
     }
 
     public function getInstrument(string $symbol, ?string $accountId = null): InstrumentDto
@@ -68,14 +79,10 @@ final class SessionInstrumentService implements SessionInstrumentServiceInterfac
         return $this->mapper->map($data);
     }
 
-    public function getExchanges(?string $accountId = null): ExchangeCollection
+    public function getExchanges(): ExchangeCollection
     {
-        $resolvedAccountId = $accountId ?? $this->accountResolver->resolveDefaultAccountId();
-        $response = $this->instrumentApi->exchanges(new ExchangesRequest($resolvedAccountId));
-        $data = $this->decoder->extractData(
-            $response,
-            sprintf('assets/exchanges?account_id=%s', $resolvedAccountId),
-        );
+        $response = $this->instrumentApi->exchanges(new ExchangesRequest());
+        $data = $this->decoder->extractData($response, 'exchanges');
 
         return $this->exchangeMapper->mapCollection($data);
     }
@@ -88,14 +95,10 @@ final class SessionInstrumentService implements SessionInstrumentServiceInterfac
         return $this->clockMapper->map($data);
     }
 
-    public function getSchedule(string $symbol, ?string $accountId = null): ScheduleDto
+    public function getSchedule(string $symbol): ScheduleDto
     {
-        $resolvedAccountId = $accountId ?? $this->accountResolver->resolveDefaultAccountId();
-        $response = $this->instrumentApi->schedule(new ScheduleRequest($symbol, $resolvedAccountId));
-        $data = $this->decoder->extractData(
-            $response,
-            sprintf('assets/schedule?symbol=%s&account_id=%s', $symbol, $resolvedAccountId),
-        );
+        $response = $this->instrumentApi->schedule(new ScheduleRequest($symbol));
+        $data = $this->decoder->extractData($response, sprintf('assets/%s/schedule', $symbol));
 
         return $this->scheduleMapper->map($data);
     }

@@ -55,7 +55,7 @@ final class ReportSessionTest extends TestCase
         $report = $session->createAccountReport(
             new CreateAccountReportInputDto(
                 accountId: '1899011',
-                reportForm: 'REPORT_FORM_XLSX',
+                reportForm: 'REPORT_FORM_SAMPLE',
                 dateRange: new ReportDateRangeDto(
                     from: new DateTimeImmutable('2026-03-01'),
                     to: new DateTimeImmutable('2026-03-31'),

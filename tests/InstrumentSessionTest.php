@@ -35,7 +35,9 @@ final class InstrumentSessionTest extends TestCase
                 TestApiResponseFactory::fromArray([]),
             ),
             instrumentApi: new InstrumentApiStub(
-                assetsResponse: TestApiResponseFactory::fromArray([
+                assetsResponse: TestApiResponseFactory::fromArray([]),
+                assetResponse: TestApiResponseFactory::fromArray([]),
+                allAssetsResponse: TestApiResponseFactory::fromArray([
                     'ok' => true,
                     'status' => 200,
                     'data' => [
@@ -56,8 +58,6 @@ final class InstrumentSessionTest extends TestCase
                     'error' => null,
                     'meta' => [],
                 ]),
-                assetResponse: TestApiResponseFactory::fromArray([]),
-                allAssetsResponse: TestApiResponseFactory::fromArray([]),
             ),
             marketApi: new MarketApiStub(
                 TestApiResponseFactory::fromArray([]),
@@ -173,7 +173,7 @@ final class InstrumentSessionTest extends TestCase
             ),
         );
 
-        $exchanges = $session->getExchanges('ACC-1');
+        $exchanges = $session->getExchanges();
 
         /** @var ExchangeDto|null $firstExchange */
         $firstExchange = $exchanges->first();
@@ -247,14 +247,8 @@ final class InstrumentSessionTest extends TestCase
                             [
                                 'type' => 'CORE_TRADING',
                                 'interval' => [
-                                    'start_time' => [
-                                        'seconds' => '1775037600',
-                                        'nanos' => 0,
-                                    ],
-                                    'end_time' => [
-                                        'seconds' => '1775044800',
-                                        'nanos' => 0,
-                                    ],
+                                    'start_time' => '2026-04-01T10:00:00Z',
+                                    'end_time' => '2026-04-01T12:00:00Z',
                                 ],
                             ],
                         ],
@@ -269,7 +263,7 @@ final class InstrumentSessionTest extends TestCase
             ),
         );
 
-        $schedule = $session->getSchedule('YDEX@MISX', 'ACC-1');
+        $schedule = $session->getSchedule('YDEX@MISX');
 
         /** @var ScheduleSessionDto|null $coreTradingSession */
         $coreTradingSession = $schedule->sessions()->firstByType('CORE_TRADING');

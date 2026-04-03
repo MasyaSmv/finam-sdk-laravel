@@ -45,14 +45,13 @@ final class CandlesQueryDto
     }
 
     /**
-     * @return array<string, string|array<string, int>>
+     * @return array{symbol: string, timeframe: string, 'interval.startTime': string, 'interval.endTime': string}
      */
     public function toQuery(): array
     {
-        return [
+        return array_merge([
             'symbol' => $this->symbol,
             'timeframe' => $this->timeframe,
-            'interval' => $this->interval()->toArray(),
-        ];
+        ], $this->interval()->toRestQuery());
     }
 }

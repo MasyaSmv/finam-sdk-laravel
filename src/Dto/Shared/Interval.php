@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MasyaSmv\FinamSdk\Dto\Shared;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use MasyaSmv\FinamSdk\Exceptions\InvalidRequestException;
 
 final class Interval
@@ -30,5 +32,23 @@ final class Interval
             'start' => $this->start,
             'end' => $this->end,
         ];
+    }
+
+    /**
+     * @return array{'interval.startTime': string, 'interval.endTime': string}
+     */
+    public function toRestQuery(): array
+    {
+        return [
+            'interval.startTime' => $this->formatTimestamp($this->start),
+            'interval.endTime' => $this->formatTimestamp($this->end),
+        ];
+    }
+
+    private function formatTimestamp(int $timestamp): string
+    {
+        return (new DateTimeImmutable('@' . $timestamp))
+            ->setTimezone(new DateTimeZone('UTC'))
+            ->format('Y-m-d\TH:i:s\Z');
     }
 }

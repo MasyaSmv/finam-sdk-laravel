@@ -56,7 +56,7 @@ final class InstrumentApi implements InstrumentApiInterface
      */
     public function exchanges(ExchangesRequest $request): ApiResponse
     {
-        return $this->client->get('/assets/exchanges', $request->toQuery());
+        return $this->client->get('/exchanges', $request->toQuery());
     }
 
     /**
@@ -88,6 +88,6 @@ final class InstrumentApi implements InstrumentApiInterface
      */
     public function schedule(ScheduleRequest $request): ApiResponse
     {
-        return $this->client->get('/assets/schedule', $request->toQuery());
+        return $this->client->get("/assets/{$request->symbol()}/schedule", $request->toQuery());
     }
 }

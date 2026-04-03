@@ -19,9 +19,9 @@ interface SessionInstrumentServiceInterface
 
     public function getInstrument(string $symbol, ?string $accountId = null): InstrumentDto;
 
-    public function getExchanges(?string $accountId = null): ExchangeCollection;
+    public function getExchanges(): ExchangeCollection;
 
     public function getClock(): ClockDto;
 
-    public function getSchedule(string $symbol, ?string $accountId = null): ScheduleDto;
+    public function getSchedule(string $symbol): ScheduleDto;
 }

@@ -8,27 +8,23 @@ use MasyaSmv\FinamSdk\Exceptions\InvalidRequestException;
 
 final class ScheduleRequest
 {
-    public function __construct(
-        private string $symbol,
-        private string $accountId,
-    ) {
+    public function __construct(private string $symbol)
+    {
         if ($this->symbol === '') {
             throw new InvalidRequestException('Symbol must not be empty.');
         }
+    }
 
-        if ($this->accountId === '') {
-            throw new InvalidRequestException('AccountId must not be empty.');
-        }
+    public function symbol(): string
+    {
+        return $this->symbol;
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, scalar>
      */
     public function toQuery(): array
     {
-        return [
-            'symbol' => $this->symbol,
-            'account_id' => $this->accountId,
-        ];
+        return [];
     }
 }

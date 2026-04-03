@@ -40,7 +40,7 @@ final class TradesRequest
         }
 
         if ($this->interval !== null) {
-            $query['interval'] = $this->interval->toArray();
+            $query = array_merge($query, $this->interval->toRestQuery());
         }
 
         return $query;

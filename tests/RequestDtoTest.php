@@ -6,6 +6,8 @@ namespace MasyaSmv\FinamSdk\Tests;
 
 use DateTimeImmutable;
 use MasyaSmv\FinamSdk\Dto\Auth\AuthRequest;
+use MasyaSmv\FinamSdk\Dto\Account\TradesRequest as AccountTradesRequest;
+use MasyaSmv\FinamSdk\Dto\Account\TransactionsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\AllAssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\AssetsRequest;
 use MasyaSmv\FinamSdk\Dto\Instrument\ClockRequest;
@@ -27,6 +29,7 @@ use MasyaSmv\FinamSdk\Dto\Report\CreateAccountReportInputDto;
 use MasyaSmv\FinamSdk\Dto\Report\CreateAccountReportRequest;
 use MasyaSmv\FinamSdk\Dto\Report\GetAccountReportInfoRequest;
 use MasyaSmv\FinamSdk\Dto\Report\ReportDateRangeDto;
+use MasyaSmv\FinamSdk\Dto\Shared\Interval;
 use MasyaSmv\FinamSdk\Exceptions\InvalidRequestException;
 
 final class RequestDtoTest extends TestCase
@@ -83,12 +86,11 @@ final class RequestDtoTest extends TestCase
         $this->assertSame([], $request->toQuery());
     }
 
-    public function testExchangesRequestBuildsAccountQuery(): void
+    public function testExchangesRequestReturnsEmptyQuery(): void
     {
-        $request = new ExchangesRequest('account-1');
+        $request = new ExchangesRequest();
 
-        $this->assertSame('account-1', $request->accountId());
-        $this->assertSame(['account_id' => 'account-1'], $request->toQuery());
+        $this->assertSame([], $request->toQuery());
     }
 
     public function testGetAssetParamsRequestMovesSymbolToPathAndKeepsOnlyAccountInQuery(): void
@@ -107,17 +109,12 @@ final class RequestDtoTest extends TestCase
         $this->assertSame(['account_id' => 'account-1'], $request->toQuery());
     }
 
-    public function testScheduleRequestBuildsSymbolAndAccountQuery(): void
+    public function testScheduleRequestMovesSymbolToPathAndKeepsQueryEmpty(): void
     {
-        $request = new ScheduleRequest('YDEX@MISX', 'account-1');
+        $request = new ScheduleRequest('YDEX@MISX');
 
-        $this->assertSame(
-            [
-                'symbol' => 'YDEX@MISX',
-                'account_id' => 'account-1',
-            ],
-            $request->toQuery(),
-        );
+        $this->assertSame('YDEX@MISX', $request->symbol());
+        $this->assertSame([], $request->toQuery());
     }
 
     public function testOptionsChainRequestMovesUnderlyingSymbolToPath(): void
@@ -168,10 +165,44 @@ final class RequestDtoTest extends TestCase
         $this->assertSame(
             [
                 'timeframe' => 'TIME_FRAME_M1',
-                'interval' => [
-                    'start' => 1774940400,
-                    'end' => 1774944000,
-                ],
+                'interval.startTime' => '2026-03-31T07:00:00Z',
+                'interval.endTime' => '2026-03-31T08:00:00Z',
+            ],
+            $request->toQuery(),
+        );
+    }
+
+    public function testTradesRequestBuildsRfc3339IntervalQuery(): void
+    {
+        $request = new AccountTradesRequest(
+            accountId: 'account-1',
+            limit: 5,
+            interval: new Interval(1774933200, 1775019600),
+        );
+
+        $this->assertSame(
+            [
+                'limit' => 5,
+                'interval.startTime' => '2026-03-31T05:00:00Z',
+                'interval.endTime' => '2026-04-01T05:00:00Z',
+            ],
+            $request->toQuery(),
+        );
+    }
+
+    public function testTransactionsRequestBuildsRfc3339IntervalQuery(): void
+    {
+        $request = new TransactionsRequest(
+            accountId: 'account-1',
+            limit: 5,
+            interval: new Interval(1774933200, 1775019600),
+        );
+
+        $this->assertSame(
+            [
+                'limit' => 5,
+                'interval.startTime' => '2026-03-31T05:00:00Z',
+                'interval.endTime' => '2026-04-01T05:00:00Z',
             ],
             $request->toQuery(),
         );
@@ -269,7 +300,7 @@ final class RequestDtoTest extends TestCase
         $request = new CreateAccountReportRequest(
             new CreateAccountReportInputDto(
                 accountId: '1899011',
-                reportForm: 'REPORT_FORM_XLSX',
+                reportForm: 'REPORT_FORM_SAMPLE',
                 dateRange: new ReportDateRangeDto(
                     from: new DateTimeImmutable('2026-03-01'),
                     to: new DateTimeImmutable('2026-03-31'),
@@ -280,7 +311,7 @@ final class RequestDtoTest extends TestCase
         $this->assertSame(
             [
                 'account_id' => '1899011',
-                'report_form' => 'REPORT_FORM_XLSX',
+                'report_form' => 'REPORT_FORM_SAMPLE',
                 'date_range' => [
                     'from' => '2026-03-01',
                     'to' => '2026-03-31',

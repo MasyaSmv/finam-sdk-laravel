@@ -79,7 +79,7 @@ final class SessionOrderService implements SessionOrderServiceInterface
         );
         $data = $this->decoder->extractData(
             $response,
-            sprintf('accounts/%s/orders/sltp', $resolvedAccountId),
+            sprintf('accounts/%s/sltp-orders', $resolvedAccountId),
         );
 
         return $this->mapper->map($data, $resolvedAccountId);
