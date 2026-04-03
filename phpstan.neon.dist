@@ -1,10 +1,13 @@
 parameters:
+  level: max
+
   paths:
     - src
     - tests
 
-  level: 6
   tmpDir: .phpstan.cache
+  treatPhpDocTypesAsCertain: false
+  inferPrivatePropertyTypeFromConstructor: true
 
   excludePaths:
     analyse:

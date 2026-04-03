@@ -50,8 +50,9 @@
 На текущем этапе пакет предоставляет базовую инфраструктуру:
 
 * автоподключение Service Provider (Laravel package auto-discovery);
-* конфигурация через `config/finam.php` и переменные окружения;
+* конфигурация транспорта через `config/finam.php`;
 * базовый REST-клиент на Guzzle с таймаутами и простыми ретраями;
+* facade-first API через `Finam::connect($token)` и `Finam::client($token)`;
 * тестовый стенд (Orchestra Testbench) для package-level тестов.
 
 > Важно: это SDK. Бизнес-логика торговли, риск-менеджмент и «правильные решения» не входят в пакет.
@@ -78,74 +79,74 @@ composer update
 
 ## Настройка
 
-Пакет читает настройки из `config('finam.*')`.
+Пакет читает транспортные настройки из `config('finam.*')`. Токен в конфиге не хранится: его нужно передавать явно в runtime.
 
-Рекомендуемый минимум в `.env`:
+Пример `config/finam.php`:
 
-```dotenv
-FINAM_BASE_URL=https://trade-api.finam.ru
-FINAM_TOKEN=your_token_here
-
-FINAM_HTTP_TIMEOUT=10
-FINAM_HTTP_CONNECT_TIMEOUT=5
-FINAM_HTTP_RETRIES=0
-FINAM_HTTP_RETRY_DELAY_MS=200
-FINAM_HTTP_USER_AGENT=finam-sdk-laravel
+```php
+return [
+    'base_url' => 'https://tradeapi.finam.ru/v1',
+    'http' => [
+        'timeout' => 10.0,
+        'connect_timeout' => 5.0,
+        'retries' => 0,
+        'retry_delay_ms' => 200,
+        'user_agent' => 'finam-sdk-laravel',
+    ],
+];
 ```
 
-> Примечание: конкретный формат авторизации (например, `Bearer <token>`) и точный base url должны соответствовать требованиям Finam Trade API. Если формат отличается — правится в транспортном слое клиента.
+Токен всегда передаётся явно:
 
-### Аутентификация
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
 
-SDK поддерживает два драйвера авторизации, управляется через `FINAM_AUTH_DRIVER`:
-
-* `token` — статический токен (по умолчанию). Использует `FINAM_TOKEN` для формирования заголовка авторизации;
-* `oauth` — получение `access_token` через Auth Service (`client_credentials`), кэширование `access_token` через кеш Laravel для уменьшения обращений к Auth API.
-
-Пример конфигурации для OAuth-драйвера в `.env`:
-
-```dotenv
-FINAM_AUTH_DRIVER=oauth
-
-FINAM_AUTH_BASE_URL=https://trade-api.finam.ru
-FINAM_AUTH_TOKEN_ENDPOINT=/auth/oauth2/v1/token
-FINAM_AUTH_CLIENT_ID=your_client_id
-FINAM_AUTH_CLIENT_SECRET=your_client_secret
-FINAM_AUTH_GRANT_TYPE=client_credentials
-FINAM_AUTH_SCOPE=""
-
-FINAM_AUTH_CACHE_KEY=finam:auth:access_token
-FINAM_AUTH_CACHE_TTL=300
+$session = Finam::connect($token);
+$client = Finam::client($token);
 ```
-
-> Параметры `cache_key` и `cache_ttl` управляют кешированием `access_token` (Redis/array). Если требуется отключить кеш — установи TTL в `0`.
 
 ## Быстрый старт
 
-### Получить клиента из контейнера Laravel
+### High-level session API
+
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$session = Finam::connect($token);
+
+$details = $session->sessionDetails();
+$quotes = $session->getLatestQuotes(['SBER@MISX', 'GAZP@MISX']);
+$orders = $session->getOrders('account-id');
+```
+
+### Низкоуровневый клиент
+
+Если нужен прямой доступ к transport-слою:
+
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$client = Finam::client($token);
+$response = $client->get('/sessions/details');
+```
+
+### Plain PHP
 
 ```php
 use MasyaSmv\FinamSdk\Client\FinamClient;
 
-$client = app(FinamClient::class);
-
-// Пример GET
-$response = $client->get('/some/endpoint', [
-    'param' => 'value',
-]);
-
-// Пример POST
-$response = $client->post('/some/endpoint', [
-    'foo' => 'bar',
-]);
-
-$body = (string) $response->getBody();
+$client = FinamClient::make($token);
+$response = $client->get('/sessions/details');
 ```
 
-### Через алиас контейнера
+### Фабрика клиентов
 
 ```php
-$client = app('finam.sdk');
+use MasyaSmv\FinamSdk\Client\FinamClientFactory;
+
+/** @var FinamClientFactory $factory */
+$factory = app(FinamClientFactory::class);
+$client = $factory->withToken($token);
 ```
 
 ## Публикация конфига
@@ -172,7 +173,13 @@ composer test
 composer analyse
 ```
 
-> Если ты используешь GitHub Actions, workflow `CI` обычно запускает и тесты, и статический анализ.
+Запуск Psalm:
+
+```bash
+composer psalm
+```
+
+> GitHub Actions workflow `CI` запускает `composer validate --strict`, PHPStan, Psalm и тесты.
 
 ## Версионирование
 

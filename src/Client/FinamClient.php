@@ -1,108 +1,452 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace MasyaSmv\FinamSdk\Client;
 
 use GuzzleHttp\Client as Guzzle;
 use GuzzleHttp\Exception\GuzzleException;
+use InvalidArgumentException;
+use MasyaSmv\FinamSdk\Api\Account\AccountApi;
+use MasyaSmv\FinamSdk\Api\Auth\AuthApi;
+use MasyaSmv\FinamSdk\Api\Connect\ConnectApi;
+use MasyaSmv\FinamSdk\Api\Instrument\InstrumentApi;
+use MasyaSmv\FinamSdk\Api\Market\MarketApi;
+use MasyaSmv\FinamSdk\Api\Order\OrderApi;
+use MasyaSmv\FinamSdk\Api\Reports\ReportsApi;
+use MasyaSmv\FinamSdk\Api\UsageMetrics\UsageMetricsApi;
+use MasyaSmv\FinamSdk\Auth\StaticTokenProvider;
+use MasyaSmv\FinamSdk\Auth\TokenProviderInterface;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiError;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiHeaders;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiDiagnosticContext;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiMeta;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiPayload;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiRequestContext;
+use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 use MasyaSmv\FinamSdk\Exceptions\ApiRequestFailedException;
-use Psr\Http\Message\ResponseInterface;
+use MasyaSmv\FinamSdk\Exceptions\InvalidResponseException;
 
-/**
- * Минимальный HTTP-клиент для работы с Finam API.
- *
- * Инкапсулирует настройки таймаутов, user-agent и стратегию ретраев, чтобы
- * обеспечить предсказуемое поведение при сетевых сбоях.
- */
 final class FinamClient
 {
+    public const DEFAULT_BASE_URL = 'https://tradeapi.finam.ru/v1/';
+
     private Guzzle $http;
 
-    /**
-     * @param string $baseUrl        Базовый URL API Finam.
-     * @param string $token          Токен авторизации (будет проставлен в Authorization).
-     * @param float  $timeout        Таймаут выполнения запроса.
-     * @param float  $connectTimeout Таймаут установки соединения.
-     * @param int    $retries        Количество дополнительных попыток при сетевых ошибках.
-     * @param int    $retryDelayMs   Пауза между попытками (в миллисекундах).
-     * @param string $userAgent      Значение заголовка User-Agent.
-     */
+    /** @var array<class-string, object> */
+    private array $resources = [];
+
     public function __construct(
-        private string $baseUrl,
-        private string $token,
+        TokenProviderInterface|string $tokenProvider,
+        private string $baseUrl = self::DEFAULT_BASE_URL,
         private float $timeout = 10.0,
         private float $connectTimeout = 5.0,
         private int $retries = 0,
         private int $retryDelayMs = 200,
         private string $userAgent = 'finam-sdk-laravel',
     ) {
+        $this->tokenProvider = is_string($tokenProvider)
+            ? new StaticTokenProvider($tokenProvider)
+            : $tokenProvider;
+
+        // Guzzle создаём один раз. Authorization будем подставлять на каждый запрос
+        // через options['headers'] ниже.
         $this->http = new Guzzle([
             'base_uri' => rtrim($this->baseUrl, '/') . '/',
             'timeout' => $this->timeout,
             'connect_timeout' => $this->connectTimeout,
+
+            // Критично: не бросаем исключения на 4xx/5xx,
+            // чтобы всегда иметь body и вернуть стабильный массив.
+            'http_errors' => false,
+
             'headers' => [
                 'Accept' => 'application/json',
                 'User-Agent' => $this->userAgent,
-                'Authorization' => $this->token !== '' ? ('Bearer ' . $this->token) : '',
             ],
         ]);
     }
 
+    private TokenProviderInterface $tokenProvider;
+
     /**
-     * Простейший GET.
-     * Потом можно расширить до request(method, uri, options), добавить middleware, логирование и т.д.
+     * Быстрый конструктор для НЕ-Laravel использования.
+     * Сохраняем удобство, но внутри всё равно TokenProvider.
      *
-     * @param string               $uri   URI относительно baseUrl.
-     * @param array<string, mixed> $query Параметры запроса.
+     * @param string $token
+     * @param string|null $baseUrl
+     *
+     * @return self
      */
-    public function get(string $uri, array $query = []): ResponseInterface
+    public static function make(string $token, ?string $baseUrl = null): self
     {
-        return $this->requestWithRetries('GET', $uri, ['query' => $query]);
+        return new self(
+            tokenProvider: new StaticTokenProvider($token),
+            baseUrl: $baseUrl ?? self::DEFAULT_BASE_URL,
+        );
     }
 
     /**
-     * Единая точка вызова с ретраями.
+     * Алиас для быстрого создания клиента с токеном.
      *
-     * Реализовано максимально просто:
-     *  - повторяем попытки при сетевых исключениях;
-     *  - бизнес-ошибки (400/422) сюда не относятся — их обычно не ретраят.
+     * @param string $token
+     * @param string|null $baseUrl
      *
-     * @param string               $method  HTTP метод.
-     * @param string               $uri     URI относительно baseUrl.
-     * @param array<string, mixed> $options Параметры запроса для Guzzle.
-     *
-     * @throws ApiRequestFailedException После исчерпания всех ретраев.
+     * @return self
      */
-    private function requestWithRetries(string $method, string $uri, array $options): ResponseInterface
+    public static function connectToken(string $token, ?string $baseUrl = null): self
+    {
+        return new self(
+            tokenProvider: $token,
+            baseUrl: $baseUrl ?? self::DEFAULT_BASE_URL,
+        );
+    }
+
+    /**
+     * Актуальный токен из провайдера (нужно ресурсам, например sessions/details).
+     */
+    public function getAccessToken(): string
+    {
+        return $this->tokenProvider->getToken();
+    }
+
+    /**
+     * GET (нормализованный JSON).
+     *
+     * @param array<string, mixed> $query
+     *
+     * @return ApiResponse
+     */
+    public function get(string $uri, array $query = []): ApiResponse
+    {
+        return $this->requestJson('GET', $uri, ['query' => $query]);
+    }
+
+    /**
+     * POST JSON (нормализованный JSON).
+     *
+     * @param array<string, mixed> $payload
+     *
+     * @return ApiResponse
+     */
+    public function post(string $uri, array $payload = []): ApiResponse
+    {
+        return $this->requestJson('POST', $uri, ['json' => $payload]);
+    }
+
+    /**
+     * DELETE (нормализованный JSON).
+     *
+     * @param array<string, mixed> $query
+     */
+    public function delete(string $uri, array $query = []): ApiResponse
+    {
+        return $this->requestJson('DELETE', $uri, ['query' => $query]);
+    }
+
+    /**
+     * Единая точка запроса: сетевой вызов + нормализация ответа.
+     *
+     * @param array<string, mixed> $options
+     *
+     * @return ApiResponse
+     */
+    public function requestJson(string $method, string $uri, array $options): ApiResponse
     {
         $attempt = 0;
         $maxAttempts = max(1, $this->retries + 1);
 
+        $uri = ltrim($uri, '/');
+
         while (true) {
             $attempt++;
 
+            // Подставляем актуальный Authorization на каждый запрос.
+            // Токен может обновиться без пересоздания FinamClient.
+            $options = $this->withAuthHeader($options);
+
             try {
-                return $this->http->request($method, ltrim($uri, '/'), $options);
+                $response = $this->http->request($method, $uri, $options);
+
+                $status = $response->getStatusCode();
+                $headers = $response->getHeaders();
+
+                $body = (string)$response->getBody();
+                $trimmed = trim($body);
+
+                $data = null;
+                $jsonError = null;
+
+                if ($trimmed !== '') {
+                    $decoded = json_decode($trimmed, true);
+
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        // Гарантируем, что data — массив.
+                        $data = is_array($decoded) ? $decoded : ['value' => $decoded];
+                    } else {
+                        $jsonError = json_last_error_msg();
+                    }
+                }
+
+                // Если сервер вернул 2xx, но JSON битый — это нарушенный контракт => исключение
+                if (($status >= 200 && $status < 300) && $jsonError !== null) {
+                    throw new InvalidResponseException(
+                        message: 'Response is not valid JSON: ' . $jsonError,
+                        httpStatus: $status,
+                        rawBody: mb_substr($body, 0, 2000),
+                        context: new ApiDiagnosticContext(
+                            endpoint: $uri,
+                            request: $this->meta($headers, $method, $uri, $options, $attempt)->request(),
+                            headers: $this->meta($headers, $method, $uri, $options, $attempt)->headers(),
+                            rawBody: mb_substr($body, 0, 2000),
+                        ),
+                    );
+                }
+
+                $ok = ($status >= 200 && $status < 300) && ($jsonError === null);
+
+                if ($ok) {
+                    return new ApiResponse(
+                        ok: true,
+                        status: $status,
+                        data: new ApiPayload($data ?? []),
+                        error: null,
+                        meta: $this->meta($headers, $method, $uri, $options, $attempt),
+                    );
+                }
+
+                $details = is_array($data) ? new ApiPayload($data) : null;
+                $errorMessage = $this->resolveErrorMessage($status, $jsonError, $details);
+
+                return new ApiResponse(
+                    ok: false,
+                    status: $status,
+                    data: null,
+                    error: new ApiError(
+                        message: $errorMessage,
+                        type: $this->guessErrorType($status, $jsonError),
+                        details: $details,
+                        raw: $jsonError !== null ? mb_substr($body, 0, 2000) : null,
+                    ),
+                    meta: $this->meta($headers, $method, $uri, $options, $attempt),
+                );
             } catch (GuzzleException $e) {
                 if ($attempt >= $maxAttempts) {
                     throw new ApiRequestFailedException(
                         sprintf('Finam API request failed after %d attempt(s): %s', $attempt, $e->getMessage()),
+                        context: new ApiDiagnosticContext(
+                            endpoint: $uri,
+                            request: $this->requestContext($method, $uri, $options, $attempt),
+                        ),
                         previous: $e,
                     );
                 }
 
-                usleep($this->retryDelayMs * 1000);
+                $sleepMicroseconds = max(0, $this->retryDelayMs) * 1000;
+
+                usleep($sleepMicroseconds);
             }
         }
     }
 
     /**
-     * Простейший POST JSON.
+     * @param array<string, mixed> $options
      *
-     * @param string               $uri     URI относительно baseUrl.
-     * @param array<string, mixed> $payload JSON-параметры запроса.
+     * @return array<string, mixed>
      */
-    public function post(string $uri, array $payload = []): ResponseInterface
+    private function withAuthHeader(array $options): array
     {
-        return $this->requestWithRetries('POST', $uri, ['json' => $payload]);
+        $token = $this->getAccessToken();
+
+        // Если провайдер вернул пусто — лучше не лепить "Bearer ".
+        // Пусть API вернёт 401, а мы отдадим нормализованную ошибку.
+        /** @var array<string, string> $headers */
+        $headers = (array)($options['headers'] ?? []);
+
+        if ($token === '') {
+            unset($headers['Authorization']);
+        } else {
+            $headers['Authorization'] = 'Bearer ' . $token;
+        }
+
+        $options['headers'] = $headers;
+
+        return $options;
+    }
+
+    private function guessErrorType(int $status, ?string $jsonError): ?string
+    {
+        if ($jsonError !== null) {
+            return 'invalid_json';
+        }
+
+        return match (true) {
+            $status === 401 || $status === 403 => 'auth',
+            $status === 404 => 'not_found',
+            $status >= 400 && $status < 500 => 'client',
+            $status >= 500 => 'server',
+            default => null,
+        };
+    }
+
+    /**
+     * @template T of object
+     *
+     * @param class-string<T> $class
+     *
+     * @return T
+     */
+    private function resource(string $class)
+    {
+        if (isset($this->resources[$class])) {
+            /** @var T $resource */
+            $resource = $this->resources[$class];
+
+            return $resource;
+        }
+
+        // Защита от опечаток / несуществующих классов
+        if (!class_exists($class)) {
+            throw new InvalidArgumentException("API resource class does not exist: {$class}");
+        }
+
+        $instance = new $class($this);
+
+        $this->resources[$class] = $instance;
+
+        /** @var T $resource */
+        $resource = $instance;
+
+        return $resource;
+    }
+
+    public function connect(): ConnectApi
+    {
+        /** @var ConnectApi $api */
+        $api = $this->resource(ConnectApi::class);
+
+        return $api;
+    }
+
+    public function auth(): AuthApi
+    {
+        /** @var AuthApi $api */
+        $api = $this->resource(AuthApi::class);
+
+        return $api;
+    }
+
+    public function account(): AccountApi
+    {
+        /** @var AccountApi $api */
+        $api = $this->resource(AccountApi::class);
+
+        return $api;
+    }
+
+    public function instrument(): InstrumentApi
+    {
+        /** @var InstrumentApi $api */
+        $api = $this->resource(InstrumentApi::class);
+
+        return $api;
+    }
+
+    public function order(): OrderApi
+    {
+        /** @var OrderApi $api */
+        $api = $this->resource(OrderApi::class);
+
+        return $api;
+    }
+
+    public function market(): MarketApi
+    {
+        /** @var MarketApi $api */
+        $api = $this->resource(MarketApi::class);
+
+        return $api;
+    }
+
+    public function usageMetrics(): UsageMetricsApi
+    {
+        /** @var UsageMetricsApi $api */
+        $api = $this->resource(UsageMetricsApi::class);
+
+        return $api;
+    }
+
+    public function reports(): ReportsApi
+    {
+        /** @var ReportsApi $api */
+        $api = $this->resource(ReportsApi::class);
+
+        return $api;
+    }
+
+    /**
+     * @param array<array-key, array<array-key, string>> $headers
+     * @param array<string, mixed> $options
+     */
+    private function meta(array $headers, string $method, string $uri, array $options, int $attempt): ApiMeta
+    {
+        $normalizedHeaders = [];
+
+        foreach ($headers as $name => $values) {
+            if (!is_string($name)) {
+                continue;
+            }
+
+            $normalizedHeaders[$name] = array_values(
+                array_filter(
+                    $values,
+                    static fn ($value): bool => is_string($value),
+                ),
+            );
+        }
+
+        /** @var array<string, scalar|array<int|string, scalar|null>> $query */
+        $query = is_array($options['query'] ?? null) ? $options['query'] : [];
+        /** @var array<string, scalar|array<int|string, scalar|null>> $payload */
+        $payload = is_array($options['json'] ?? null) ? $options['json'] : [];
+
+        return new ApiMeta(
+            headers: new ApiHeaders($normalizedHeaders),
+            request: $this->requestContext($method, $uri, $options, $attempt),
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function requestContext(string $method, string $uri, array $options, int $attempt): ApiRequestContext
+    {
+        /** @var array<string, scalar|array<int|string, scalar|null>> $query */
+        $query = is_array($options['query'] ?? null) ? $options['query'] : [];
+        /** @var array<string, scalar|array<int|string, scalar|null>> $payload */
+        $payload = is_array($options['json'] ?? null) ? $options['json'] : [];
+
+        return new ApiRequestContext(
+            method: $method,
+            uri: $uri,
+            query: new ApiPayload($query),
+            payload: new ApiPayload($payload),
+            attempt: $attempt,
+        );
+    }
+
+    private function resolveErrorMessage(int $status, ?string $jsonError, ?ApiPayload $details): string
+    {
+        if ($jsonError !== null) {
+            return 'Response is not valid JSON: ' . $jsonError;
+        }
+
+        $message = $details?->firstStringByKeys('message', 'error', 'description', 'detail');
+
+        if ($message !== null) {
+            return $message;
+        }
+
+        return 'HTTP error: ' . $status;
     }
 }
