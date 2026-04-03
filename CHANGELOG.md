@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## v1.1.1 - 2026-04-03
+- Fixed CI for the `connectSecret()` release by tightening PHPStan-visible typing in the new coverage tests
+
 ## v1.1.0 - 2026-04-03
 - Added `Finam::connectSecret($secret)` as a high-level shortcut that issues a session token internally and returns a ready-to-use session
 
