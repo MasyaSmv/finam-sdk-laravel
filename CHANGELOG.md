@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+
+## v1.0.0 - 2026-04-03
+- Expanded end-user documentation: refreshed README, added package docs pages for installation, quick start, session API, low-level client, errors, and FAQ
 - Added full automated coverage for the current SDK codebase and expanded regression tests around transport, DTO, client, and facade/session flows
 - Aligned live Finam usage metrics, asset, and order book mapping with nullable and partial response shapes; auth token issuance now works without requiring a fake runtime token
 - Refined market order book and latest trades DTOs to match documented Finam `rows` and `size` response fields

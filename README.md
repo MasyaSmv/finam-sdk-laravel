@@ -1,87 +1,254 @@
-# Finam SDK (Laravel)
+# Finam SDK for Laravel and PHP
 
 [![CI](https://github.com/MasyaSmv/finam-sdk-laravel/actions/workflows/ci.yml/badge.svg)](https://github.com/MasyaSmv/finam-sdk-laravel/actions/workflows/ci.yml)
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/masyasmv/finam-sdk-laravel)](https://packagist.org/packages/masyasmv/finam-sdk-laravel)
 [![Total Downloads](https://img.shields.io/packagist/dt/masyasmv/finam-sdk-laravel)](https://packagist.org/packages/masyasmv/finam-sdk-laravel)
 [![License](https://img.shields.io/github/license/MasyaSmv/finam-sdk-laravel)](LICENSE)
 
-![PHP](https://img.shields.io/badge/PHP-8.0%2B-777BB4?logo=php\&logoColor=white)
-![Laravel](https://img.shields.io/badge/Laravel-8%2B-FF2D20?logo=laravel\&logoColor=white)
-![Static Analysis](https://img.shields.io/badge/PHPStan-level%206-2f855a)
+PHP SDK для Finam Trade API с удобной работой через Laravel facade и без Laravel.
 
-> Неофициальный SDK для работы с Finam Trade API (REST) с удобной интеграцией в Laravel 8+.
->
-> Документация API: [https://tradeapi.finam.ru/docs/about/](https://tradeapi.finam.ru/docs/about/)
+Пакет решает две задачи:
 
----
+- даёт простой high-level API для типовых сценариев;
+- оставляет низкоуровневый клиент, если нужен прямой доступ к REST-методам.
 
-## Содержание
+Документация Finam: <https://tradeapi.finam.ru/docs/about/>
 
-* [Зачем этот пакет](#зачем-этот-пакет)
-* [Возможности](#возможности)
-* [Требования](#требования)
-* [Установка](#установка)
+## Для кого пакет
 
-    * [Из Packagist](#из-packagist)
-* [Настройка](#настройка)
-* [Быстрый старт](#быстрый-старт)
-* [Публикация конфига](#публикация-конфига)
-* [Тесты и статический анализ](#тесты-и-статический-анализ)
-* [Версионирование](#версионирование)
-* [Безопасность](#безопасность)
-* [Contributing](#contributing)
-* [License](#license)
+Пакет подойдёт, если ты хочешь:
 
----
+- быстро получить котировки, инструменты, операции и заявки;
+- работать не с сырыми массивами, а с DTO и коллекциями;
+- использовать Laravel facade `Finam::...`;
+- подключить тот же SDK в обычном PHP-проекте без Laravel.
 
-## Зачем этот пакет
+## Что уже умеет пакет
 
-Цель — дать удобный, типизированный, расширяемый SDK для взаимодействия с Finam Trade API из PHP/Laravel проектов.
-
-Фокус:
-
-* простой старт;
-* аккуратный транспортный слой (REST);
-* нормальные исключения и предсказуемое поведение;
-* удобная интеграция в контейнер Laravel.
-
-## Возможности
-
-На текущем этапе пакет предоставляет базовую инфраструктуру:
-
-* автоподключение Service Provider (Laravel package auto-discovery);
-* конфигурация транспорта через `config/finam.php`;
-* базовый REST-клиент на Guzzle с таймаутами и простыми ретраями;
-* facade-first API через `Finam::connect($token)` и `Finam::client($token)`;
-* тестовый стенд (Orchestra Testbench) для package-level тестов.
-
-> Важно: это SDK. Бизнес-логика торговли, риск-менеджмент и «правильные решения» не входят в пакет.
+- выпуск session token через `Finam::issueToken($secret)`
+- подключение сессии через `Finam::connect($token)`
+- низкоуровневый клиент через `Finam::client($token)`
+- операции по счёту
+- список заявок и получение одной заявки
+- размещение market/limit orders
+- размещение SL/TP orders
+- инструменты, биржи, расписание, часы рынка
+- котировки, свечи, стакан, последние сделки
+- usage metrics
+- создание отчёта и получение информации по отчёту
+- typed DTO и typed collections
+- Laravel service provider и facade
 
 ## Требования
 
-* PHP: `>= 8.0`
-* Laravel: `>= 8.0`
-* ext-json
+- PHP `^8.0`
+- Laravel `^8.0` для Laravel-режима
+- `ext-json`
 
 ## Установка
-
-### Из Packagist
 
 ```bash
 composer require masyasmv/finam-sdk-laravel
 ```
 
-После этого:
+Если ты используешь Laravel, service provider и facade подключатся автоматически.
 
-```bash
-composer update
+## Быстрый старт
+
+### 1. Получить session token из secret
+
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$issued = Finam::issueToken($secret);
+$sessionToken = $issued->token();
 ```
 
-## Настройка
+### 2. Подключить session API
 
-Пакет читает транспортные настройки из `config('finam.*')`. Токен в конфиге не хранится: его нужно передавать явно в runtime.
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
 
-Пример `config/finam.php`:
+$session = Finam::connect($sessionToken);
+
+$details = $session->sessionDetails();
+$accountIds = $details->accountIds();
+
+$quotes = $session->getLatestQuotes(['SBER@MISX', 'GAZP@MISX']);
+$orders = $session->getOrders();
+```
+
+### 3. Получить счёт и использовать его дальше
+
+Если в сессии только один счёт, `accountId` можно не передавать в часть методов.  
+Если счетов несколько, передавай `accountId` явно.
+
+```php
+/** @var string $accountId */
+$accountId = $details->accountIds()->first();
+
+$operations = $session->getOperationsByDate(
+    new DateTimeImmutable('2026-04-01'),
+    new DateTimeImmutable('2026-04-03'),
+    $accountId,
+);
+
+$order = $session->getOrder('123456789', $accountId);
+```
+
+## Примеры
+
+### Laravel: котировки и стакан
+
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$session = Finam::connect($token);
+
+$quotes = $session->getLatestQuotes(['SBER@MISX', 'GAZP@MISX']);
+$sber = $quotes->first();
+
+$orderBook = $session->getOrderBook('SBER@MISX');
+$bestRow = $orderBook->rows()->first();
+```
+
+### Laravel: свечи
+
+```php
+use DateTimeImmutable;
+use MasyaSmv\FinamSdk\Dto\Market\CandlesQueryDto;
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$session = Finam::connect($token);
+
+$candles = $session->getCandles(new CandlesQueryDto(
+    symbol: 'SBER@MISX',
+    timeframe: 'M1',
+    startDate: new DateTimeImmutable('-1 hour'),
+    endDate: new DateTimeImmutable('now'),
+));
+```
+
+### Laravel: размещение заявки
+
+```php
+use MasyaSmv\FinamSdk\Dto\Order\PlaceOrderInputDto;
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$session = Finam::connect($token);
+
+$order = $session->placeOrder(
+    new PlaceOrderInputDto(
+        symbol: 'SBER@MISX',
+        quantity: '1',
+        side: 'BUY',
+        type: 'LIMIT',
+        timeInForce: 'TIME_IN_FORCE_DAY',
+        limitPrice: '250.00',
+    ),
+    '1930918',
+);
+```
+
+### Laravel: SL/TP заявка
+
+```php
+use MasyaSmv\FinamSdk\Dto\Order\PlaceSlTpOrderInputDto;
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$session = Finam::connect($token);
+
+$order = $session->placeSlTpOrder(
+    new PlaceSlTpOrderInputDto(
+        symbol: 'SBER@MISX',
+        side: 'SELL',
+        quantitySl: '1',
+        slPrice: '240.00',
+        quantityTp: '1',
+        tpPrice: '270.00',
+    ),
+    '1930918',
+);
+```
+
+### Laravel: инструменты
+
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$session = Finam::connect($token);
+
+$instrument = $session->getInstrument('SBER@MISX', '1930918');
+$allInstruments = $session->getInstruments();
+$exchanges = $session->getExchanges();
+$schedule = $session->getSchedule('SBER@MISX');
+```
+
+### Laravel: usage metrics
+
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$session = Finam::connect($token);
+$usage = $session->getUsageMetrics();
+
+foreach ($usage->quotas() as $quota) {
+    echo $quota->name() . ': ' . $quota->remaining() . PHP_EOL;
+}
+```
+
+### Laravel: отчёты
+
+```php
+use DateTimeImmutable;
+use MasyaSmv\FinamSdk\Dto\Report\CreateAccountReportInputDto;
+use MasyaSmv\FinamSdk\Dto\Report\ReportDateRangeDto;
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$session = Finam::connect($token);
+
+$created = $session->createAccountReport(new CreateAccountReportInputDto(
+    accountId: '1930918',
+    reportForm: 'REPORT_FORM_PDF',
+    dateRange: new ReportDateRangeDto(
+        from: new DateTimeImmutable('2026-04-01'),
+        to: new DateTimeImmutable('2026-04-03'),
+    ),
+));
+
+$info = $session->getAccountReportInfo($created->reportId());
+```
+
+## Обычный PHP без Laravel
+
+Самый простой способ в обычном PHP-проекте: использовать низкоуровневый клиент.
+
+### Низкоуровневый клиент
+
+```php
+use MasyaSmv\FinamSdk\Client\FinamClient;
+
+$client = FinamClient::make($token);
+
+$response = $client->get('/sessions/details');
+
+if ($response->ok()) {
+    $data = $response->data();
+}
+```
+
+Если тебе нужен именно high-level session API вне Laravel, это тоже можно собрать вручную, но это уже более продвинутый сценарий. Для большинства plain PHP-проектов проще и понятнее начать с low-level клиента. Подробности есть в [docs/low-level-client.md](docs/low-level-client.md).
+
+## Конфигурация
+
+Пакет не хранит токен в конфиге.  
+Токен всегда передаётся явно в runtime:
+
+- `Finam::issueToken($secret)`
+- `Finam::connect($token)`
+- `Finam::client($token)`
+
+`config/finam.php` хранит только настройки транспорта:
 
 ```php
 return [
@@ -96,116 +263,143 @@ return [
 ];
 ```
 
-Токен всегда передаётся явно:
-
-```php
-use MasyaSmv\FinamSdk\Facades\Finam;
-
-$session = Finam::connect($token);
-$client = Finam::client($token);
-```
-
-## Быстрый старт
-
-### High-level session API
-
-```php
-use MasyaSmv\FinamSdk\Facades\Finam;
-
-$session = Finam::connect($token);
-
-$details = $session->sessionDetails();
-$quotes = $session->getLatestQuotes(['SBER@MISX', 'GAZP@MISX']);
-$orders = $session->getOrders('account-id');
-```
-
-### Низкоуровневый клиент
-
-Если нужен прямой доступ к transport-слою:
-
-```php
-use MasyaSmv\FinamSdk\Facades\Finam;
-
-$client = Finam::client($token);
-$response = $client->get('/sessions/details');
-```
-
-### Plain PHP
-
-```php
-use MasyaSmv\FinamSdk\Client\FinamClient;
-
-$client = FinamClient::make($token);
-$response = $client->get('/sessions/details');
-```
-
-### Фабрика клиентов
-
-```php
-use MasyaSmv\FinamSdk\Client\FinamClientFactory;
-
-/** @var FinamClientFactory $factory */
-$factory = app(FinamClientFactory::class);
-$client = $factory->withToken($token);
-```
-
-## Публикация конфига
-
-Если хочешь скопировать конфиг пакета в приложение:
+Опубликовать конфиг в Laravel можно так:
 
 ```bash
 php artisan vendor:publish --tag=finam-config
 ```
 
-Файл появится как `config/finam.php`.
+## High-level API
 
-## Тесты и статический анализ
+Основной интерфейс сессии:
 
-Запуск тестов:
+- `sessionDetails()`
+- `getOperationsByDate($startDate, $endDate, ?$accountId = null, ?$limit = null)`
+- `getOrders(?$accountId = null)`
+- `getOrder($orderId, ?$accountId = null)`
+- `placeOrder(PlaceOrderInputDto $order, ?$accountId = null)`
+- `placeSlTpOrder(PlaceSlTpOrderInputDto $order, ?$accountId = null)`
+- `getAllInstruments(?$cursor = null, bool $onlyActive = false, bool $onlyDisabled = false)`
+- `getInstruments()`
+- `getInstrument($symbol, ?$accountId = null)`
+- `getExchanges()`
+- `getClock()`
+- `getSchedule($symbol)`
+- `getLatestQuotes(array $symbols)`
+- `getCandles(CandlesQueryDto $query)`
+- `getOrderBook($symbol)`
+- `getLatestTrades($symbol)`
+- `getUsageMetrics()`
+- `createAccountReport(CreateAccountReportInputDto $report)`
+- `getAccountReportInfo($reportId)`
+
+Все эти методы возвращают DTO или typed collections.
+
+## Typed collections
+
+Коллекции наследуются от `Illuminate\Support\Collection`, поэтому доступны привычные методы:
+
+- `first()`
+- `count()`
+- `map()`
+- `filter()`
+- `pluck()`
+- `all()`
+
+Плюс у части коллекций есть удобные методы:
+
+- `OrderCollection::findById($orderId)`
+- `InstrumentCollection::findBySymbol($symbol)`
+
+## Низкоуровневый клиент
+
+Если high-level API тебе не подходит, можно работать напрямую через REST-клиент:
+
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$client = Finam::client($token);
+
+$response = $client->get('/accounts/1930918/orders');
+```
+
+Доступные resource wrappers:
+
+- `$client->auth()`
+- `$client->connect()`
+- `$client->account()`
+- `$client->order()`
+- `$client->instrument()`
+- `$client->market()`
+- `$client->usageMetrics()`
+- `$client->reports()`
+
+## Ошибки
+
+Основные типы исключений:
+
+- `InvalidRequestException`  
+  Когда входные данные некорректны ещё до отправки запроса.
+- `ApiHttpException`  
+  Когда Finam вернул HTTP-ошибку и её нужно обработать как ответ API.
+- `ApiRequestFailedException`  
+  Когда сломался transport-уровень: сеть, таймаут, невозможность выполнить запрос.
+- `InvalidResponseException`  
+  Когда сервер вернул битый или неожиданный ответ.
+- `ResponseMappingException`  
+  Когда ответ пришёл, но не соответствует ожидаемому shape.
+- `AccountResolutionException`  
+  Когда пакет не может сам выбрать счёт.
+
+Пример:
+
+```php
+use MasyaSmv\FinamSdk\Exceptions\ApiHttpException;
+use MasyaSmv\FinamSdk\Exceptions\InvalidRequestException;
+
+try {
+    $quotes = Finam::connect($token)->getLatestQuotes(['SBER@MISX']);
+} catch (InvalidRequestException $e) {
+    report($e);
+} catch (ApiHttpException $e) {
+    report($e);
+}
+```
+
+## Где смотреть полную документацию
+
+- [Полная карта документации](docs/README.md)
+- [Установка и настройка](docs/installation.md)
+- [Быстрый старт](docs/quick-start.md)
+- [High-level session API](docs/session-api.md)
+- [Низкоуровневый клиент](docs/low-level-client.md)
+- [Ошибки и диагностика](docs/errors.md)
+- [FAQ](docs/faq.md)
+
+## Тесты и качество
 
 ```bash
 composer test
-```
-
-Запуск PHPStan:
-
-```bash
 composer analyse
-```
-
-Запуск Psalm:
-
-```bash
 composer psalm
 ```
 
-> GitHub Actions workflow `CI` запускает `composer validate --strict`, PHPStan, Psalm и тесты.
+CI проверяет:
 
-## Версионирование
+- `composer validate --strict`
+- `phpunit`
+- `phpstan`
+- `psalm`
+- матрицу `prefer-stable` и `prefer-lowest`
 
-Пакет следует семантическому версионированию (SemVer):
+## Ограничения и честные ожидания
 
-* `0.x` — активная разработка, API может меняться;
-* `1.0.0` — стабилизация публичного API.
+- пакет не делает бизнес-логику стратегии за тебя
+- пакет не хранит токены
+- пакет не открывает browser login flow сам
+- для некоторых broker-side сценариев Finam может возвращать ограничения по правам, даже если SDK работает корректно
+- отчёты уже поддерживаются, но конкретные значения `reportForm` стоит сверять с актуальной документацией и правами твоего аккаунта
 
-## Безопасность
+## Лицензия
 
-* Никогда не коммить токены/секреты в репозиторий.
-* Храни токены только в `.env` / секретах CI.
-* При логировании ошибок не выводи токен целиком.
-
-Если ты нашёл уязвимость или утечку секретов — создай приватное уведомление (security advisory) или issue без секретов.
-
-## Contributing
-
-PR приветствуются.
-
-Рекомендации:
-
-* добавляй тесты на новые сценарии;
-* держи публичный API стабильным;
-* избегай жёсткой привязки к конкретному приложению (SDK должен оставаться универсальным).
-
-## License
-
-MIT. См. файл [LICENSE](LICENSE).
+MIT. См. [LICENSE](LICENSE).
