@@ -74,9 +74,9 @@ final class DtoCollectionCoverageTest extends TestCase
     {
         try {
             $callback();
-            $this->fail('Expected InvalidRequestException was not thrown.');
+            self::fail('Expected InvalidRequestException was not thrown.');
         } catch (InvalidRequestException) {
-            $this->addToAssertionCount(1);
+            self::assertTrue(true);
         }
     }
 

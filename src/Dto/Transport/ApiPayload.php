@@ -60,7 +60,7 @@ final class ApiPayload
     {
         $value = $this->values[$field] ?? null;
 
-        if (!is_array($value) || array_is_list($value)) {
+        if (!is_array($value) || self::isList($value)) {
             return null;
         }
 
@@ -72,14 +72,14 @@ final class ApiPayload
     {
         $value = $this->values[$field] ?? null;
 
-        if (!is_array($value) || !array_is_list($value)) {
+        if (!is_array($value) || !self::isList($value)) {
             return null;
         }
 
         $items = [];
 
         foreach ($value as $item) {
-            if (!is_array($item) || array_is_list($item)) {
+            if (!is_array($item) || self::isList($item)) {
                 return null;
             }
 
@@ -94,7 +94,7 @@ final class ApiPayload
     {
         $value = $this->values[$field] ?? null;
 
-        if (!is_array($value) || !array_is_list($value)) {
+        if (!is_array($value) || !self::isList($value)) {
             return null;
         }
 
@@ -141,5 +141,23 @@ final class ApiPayload
         }
 
         return null;
+    }
+
+    /**
+     * @param array<int|string, ApiNode> $value
+     */
+    private static function isList(array $value): bool
+    {
+        $index = 0;
+
+        foreach ($value as $key => $_) {
+            if ($key !== $index) {
+                return false;
+            }
+
+            $index++;
+        }
+
+        return true;
     }
 }

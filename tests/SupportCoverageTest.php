@@ -30,6 +30,32 @@ use ReflectionMethod;
 
 final class SupportCoverageTest extends TestCase
 {
+    /**
+     * @param callable(): mixed $callback
+     */
+    private function assertThrowsResponseMappingException(callable $callback): void
+    {
+        try {
+            $callback();
+            self::fail('Expected ResponseMappingException was not thrown.');
+        } catch (ResponseMappingException) {
+            self::assertTrue(true);
+        }
+    }
+
+    /**
+     * @param callable(): mixed $callback
+     */
+    private function assertThrowsInvalidRequestException(callable $callback): void
+    {
+        try {
+            $callback();
+            self::fail('Expected InvalidRequestException was not thrown.');
+        } catch (\MasyaSmv\FinamSdk\Exceptions\InvalidRequestException) {
+            self::assertTrue(true);
+        }
+    }
+
     public function testApiPayloadAndHeadersCoverAllReaders(): void
     {
         $payload = new ApiPayload([
@@ -132,12 +158,7 @@ final class SupportCoverageTest extends TestCase
             fn () => $reader->requireStringList(new ApiPayload(), 'field'),
             fn () => $reader->requireObjectList(new ApiPayload(), 'field'),
         ] as $callback) {
-            try {
-                $callback();
-                $this->fail('Expected ResponseMappingException was not thrown.');
-            } catch (ResponseMappingException) {
-                $this->addToAssertionCount(1);
-            }
+            $this->assertThrowsResponseMappingException($callback);
         }
     }
 
@@ -304,12 +325,7 @@ final class SupportCoverageTest extends TestCase
             fn () => $marketService->getOrderBook(''),
             fn () => $marketService->getLatestTrades(''),
         ] as $callback) {
-            try {
-                $callback();
-                $this->fail('Expected InvalidRequestException was not thrown.');
-            } catch (\MasyaSmv\FinamSdk\Exceptions\InvalidRequestException) {
-                $this->addToAssertionCount(1);
-            }
+            $this->assertThrowsInvalidRequestException($callback);
         }
 
         $resolver = $this->createStub(SessionAccountResolverInterface::class);
