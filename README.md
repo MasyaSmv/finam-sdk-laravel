@@ -50,8 +50,9 @@
 На текущем этапе пакет предоставляет базовую инфраструктуру:
 
 * автоподключение Service Provider (Laravel package auto-discovery);
-* конфигурация через `config/finam.php` и переменные окружения;
+* конфигурация транспорта через `config/finam.php`;
 * базовый REST-клиент на Guzzle с таймаутами и простыми ретраями;
+* facade-first API через `Finam::connect($token)` и `Finam::client($token)`;
 * тестовый стенд (Orchestra Testbench) для package-level тестов.
 
 > Важно: это SDK. Бизнес-логика торговли, риск-менеджмент и «правильные решения» не входят в пакет.
@@ -78,15 +79,13 @@ composer update
 
 ## Настройка
 
-Пакет читает настройки из `config('finam.*')` и **не использует `.env`**. Передавай значения напрямую через конфиг или конструкторы.
+Пакет читает транспортные настройки из `config('finam.*')`. Токен в конфиге не хранится: его нужно передавать явно в runtime.
 
 Пример `config/finam.php`:
 
 ```php
 return [
     'base_url' => 'https://tradeapi.finam.ru/v1',
-    'token' => 'your_token_here',
-
     'http' => [
         'timeout' => 10.0,
         'connect_timeout' => 5.0,
@@ -97,59 +96,57 @@ return [
 ];
 ```
 
-> Примечание: конкретный формат авторизации (например, `Bearer <token>`) и точный base url должны соответствовать требованиям Finam Trade API. Если формат отличается — правится в транспортном слое клиента.
+Токен всегда передаётся явно:
 
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$session = Finam::connect($token);
+$client = Finam::client($token);
+```
 
 ## Быстрый старт
 
-### Получить клиента из контейнера Laravel
+### High-level session API
+
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$session = Finam::connect($token);
+
+$details = $session->sessionDetails();
+$quotes = $session->getLatestQuotes(['SBER@MISX', 'GAZP@MISX']);
+$orders = $session->getOrders('account-id');
+```
+
+### Низкоуровневый клиент
+
+Если нужен прямой доступ к transport-слою:
+
+```php
+use MasyaSmv\FinamSdk\Facades\Finam;
+
+$client = Finam::client($token);
+$response = $client->get('/sessions/details');
+```
+
+### Plain PHP
 
 ```php
 use MasyaSmv\FinamSdk\Client\FinamClient;
+
+$client = FinamClient::make($token);
+$response = $client->get('/sessions/details');
+```
+
+### Фабрика клиентов
+
+```php
 use MasyaSmv\FinamSdk\Client\FinamClientFactory;
 
-$client = app(FinamClient::class);
-
-// Пример GET
-$response = $client->get('/some/endpoint', [
-    'param' => 'value',
-]);
-
-// Пример POST
-$response = $client->post('/some/endpoint', [
-    'foo' => 'bar',
-]);
-
-$body = (string) $response->getBody();
-```
-
-### Динамическая подстановка токенов (без singleton)
-
-Если нужно использовать разные токены (например, в цикле), пользуйся фабрикой:
-
-```php
 /** @var FinamClientFactory $factory */
 $factory = app(FinamClientFactory::class);
-
 $client = $factory->withToken($token);
-
-// Далее обычные запросы через $client
-```
-
-### Упрощённый вариант (как в примере)
-
-```php
-use MasyaSmv\FinamSdk\Client\FinamClient;
-
-$client = new FinamClient($token);
-// или
-$client = FinamClient::connect($token);
-```
-
-### Через алиас контейнера
-
-```php
-$client = app('finam.sdk');
 ```
 
 ## Публикация конфига
@@ -176,7 +173,13 @@ composer test
 composer analyse
 ```
 
-> Если ты используешь GitHub Actions, workflow `CI` обычно запускает и тесты, и статический анализ.
+Запуск Psalm:
+
+```bash
+composer psalm
+```
+
+> GitHub Actions workflow `CI` запускает `composer validate --strict`, PHPStan, Psalm и тесты.
 
 ## Версионирование
 
