@@ -138,6 +138,46 @@ final class InstrumentSessionTest extends TestCase
         $this->assertSame('Gazprom PJSC', $instrument->shortName());
     }
 
+    public function testGetInstrumentBuildsSymbolFromTickerAndMicWhenPayloadOmitsIt(): void
+    {
+        $session = FinamSession::fromApis(
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                assetsResponse: TestApiResponseFactory::fromArray([]),
+                assetResponse: TestApiResponseFactory::fromArray([
+                    'ok' => true,
+                    'status' => 200,
+                    'data' => [
+                        'id' => 'asset-3',
+                        'ticker' => 'SBER',
+                        'mic' => 'MISX',
+                        'type' => 'ASSET_TYPE_STOCK',
+                        'name' => 'Sberbank',
+                    ],
+                    'error' => null,
+                    'meta' => [],
+                ]),
+                allAssetsResponse: TestApiResponseFactory::fromArray([]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+        );
+
+        $instrument = $session->getInstrument('SBER@MISX', 'ACC-1');
+
+        $this->assertSame('SBER@MISX', $instrument->symbol());
+        $this->assertSame('SBER', $instrument->ticker());
+        $this->assertSame('MISX', $instrument->mic());
+    }
+
     public function testGetExchangesReturnsTypedCollection(): void
     {
         $session = FinamSession::fromApis(

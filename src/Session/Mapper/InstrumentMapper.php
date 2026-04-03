@@ -29,13 +29,15 @@ final class InstrumentMapper
     public function map(ApiPayload $data): InstrumentDto
     {
         $instrumentData = $this->reader->optionalObject($data, 'asset') ?? $data;
+        $ticker = $this->reader->optionalString($instrumentData, 'ticker');
+        $mic = $this->reader->optionalString($instrumentData, 'mic')
+            ?? $this->reader->optionalString($instrumentData, 'market');
 
         return new InstrumentDto(
-            symbol: $this->reader->requireString($instrumentData, 'symbol'),
+            symbol: $this->resolveSymbol($instrumentData, $ticker, $mic),
             id: $this->reader->optionalString($instrumentData, 'id'),
-            ticker: $this->reader->optionalString($instrumentData, 'ticker'),
-            mic: $this->reader->optionalString($instrumentData, 'mic')
-                ?? $this->reader->optionalString($instrumentData, 'market'),
+            ticker: $ticker,
+            mic: $mic,
             type: $this->reader->optionalString($instrumentData, 'type'),
             name: $this->reader->optionalString($instrumentData, 'name')
                 ?? $this->reader->optionalString($instrumentData, 'short_name'),
@@ -48,5 +50,24 @@ final class InstrumentMapper
             lotSize: $this->reader->optionalDecimal($instrumentData, 'lot_size'),
             isin: $this->reader->optionalString($instrumentData, 'isin'),
         );
+    }
+
+    private function resolveSymbol(ApiPayload $instrumentData, ?string $ticker, ?string $mic): string
+    {
+        $symbol = $this->reader->optionalString($instrumentData, 'symbol');
+
+        if ($symbol !== null && $symbol !== '') {
+            return $symbol;
+        }
+
+        if ($ticker !== null && $ticker !== '' && $mic !== null && $mic !== '') {
+            return sprintf('%s@%s', $ticker, $mic);
+        }
+
+        if ($ticker !== null && $ticker !== '') {
+            return $ticker;
+        }
+
+        return $this->reader->requireString($instrumentData, 'symbol');
     }
 }

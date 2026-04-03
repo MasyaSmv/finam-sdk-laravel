@@ -67,4 +67,46 @@ final class UsageMetricsSessionTest extends TestCase
         $this->assertSame('875', $firstQuota->remaining());
         $this->assertSame('2026-04-02T00:00:00Z', $firstQuota->resetTime());
     }
+
+    public function testGetUsageMetricsAllowsMissingResetTime(): void
+    {
+        $session = FinamSession::fromApis(
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            marketApi: new MarketApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            usageMetricsApi: new UsageMetricsApiStub(TestApiResponseFactory::fromArray([
+                'ok' => true,
+                'status' => 200,
+                'data' => [
+                    'quotas' => [
+                        [
+                            'name' => 'accounts_get',
+                            'limit' => '1000',
+                            'remaining' => '999',
+                        ],
+                    ],
+                ],
+                'error' => null,
+                'meta' => [],
+            ])),
+        );
+
+        /** @var UsageQuotaDto|null $firstQuota */
+        $firstQuota = $session->getUsageMetrics()->quotas()->first();
+
+        $this->assertNotNull($firstQuota);
+        $this->assertNull($firstQuota->resetTime());
+    }
 }

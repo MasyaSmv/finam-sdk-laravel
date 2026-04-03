@@ -192,6 +192,53 @@ final class MarketSessionTest extends TestCase
         $this->assertSame('120', $bestAsk->sellSize());
     }
 
+    public function testGetOrderBookDefaultsMissingSideSizeToZero(): void
+    {
+        $session = FinamSession::fromApis(
+            connectApi: new ConnectApiStub(TestApiResponseFactory::fromArray([])),
+            accountApi: new AccountApiStub(TestApiResponseFactory::fromArray([])),
+            orderApi: new OrderApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            instrumentApi: new InstrumentApiStub(
+                TestApiResponseFactory::fromArray([]),
+                TestApiResponseFactory::fromArray([]),
+            ),
+            marketApi: new MarketApiStub(
+                quotesResponse: TestApiResponseFactory::fromArray([]),
+                candlesResponse: TestApiResponseFactory::fromArray([]),
+                orderbookResponse: TestApiResponseFactory::fromArray([
+                    'ok' => true,
+                    'status' => 200,
+                    'data' => [
+                        'symbol' => 'SBER@MISX',
+                        'orderbook' => [
+                            'rows' => [
+                                [
+                                    'price' => ['value' => '250.10'],
+                                    'sell_size' => ['value' => '12.0'],
+                                    'action' => 'ACTION_ADD',
+                                ],
+                            ],
+                        ],
+                    ],
+                    'error' => null,
+                    'meta' => [],
+                ]),
+                tradesResponse: TestApiResponseFactory::fromArray([]),
+            ),
+        );
+
+        /** @var OrderBookRowDto|null $firstRow */
+        $firstRow = $session->getOrderBook('SBER@MISX')->rows()->first();
+
+        $this->assertNotNull($firstRow);
+        $this->assertSame('12.0', $firstRow->sellSize());
+        $this->assertSame('0', $firstRow->buySize());
+    }
+
     public function testGetLatestTradesReturnsTypedCollection(): void
     {
         $session = FinamSession::fromApis(

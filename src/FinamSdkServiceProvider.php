@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MasyaSmv\FinamSdk;
 
 use MasyaSmv\FinamSdk\Auth\AuthService;
+use MasyaSmv\FinamSdk\Auth\TokenProviderInterface;
 use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\ServiceProvider;
 use MasyaSmv\FinamSdk\Client\FinamClient;
@@ -54,9 +55,15 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
             /** @var FinamClientFactory $factory */
             $factory = $app->make(FinamClientFactory::class);
             $reader = new ApiValueReader();
+            $emptyProvider = new class implements TokenProviderInterface {
+                public function getToken(): string
+                {
+                    return '';
+                }
+            };
 
             return new AuthService(
-                authApi: $factory->withToken('')->auth(),
+                authApi: $factory->withTokenProvider($emptyProvider)->auth(),
                 decoder: new ApiResponseDecoder($reader),
                 mapper: new IssuedTokenMapper($reader),
             );

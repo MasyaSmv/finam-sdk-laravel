@@ -25,7 +25,7 @@ final class UsageMetricsMapper
                 name: $this->reader->requireString($quotaData, 'name'),
                 limit: $this->reader->requireDecimal($quotaData, 'limit'),
                 remaining: $this->reader->requireDecimal($quotaData, 'remaining'),
-                resetTime: $this->reader->requireString($quotaData, 'reset_time'),
+                resetTime: $this->reader->optionalString($quotaData, 'reset_time'),
             );
         }
 

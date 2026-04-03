@@ -33,8 +33,8 @@ final class OrderBookMapper
         foreach ($rows->payloads() as $row) {
             $items[] = new OrderBookRowDto(
                 price: $this->reader->requireDecimal($row, 'price'),
-                sellSize: $this->reader->requireDecimal($row, 'sell_size'),
-                buySize: $this->reader->requireDecimal($row, 'buy_size'),
+                sellSize: $this->reader->optionalDecimal($row, 'sell_size') ?? '0',
+                buySize: $this->reader->optionalDecimal($row, 'buy_size') ?? '0',
                 action: $this->reader->optionalString($row, 'action'),
                 mpid: $this->reader->optionalString($row, 'mpid'),
                 timestamp: $this->reader->optionalDateTime($row, 'timestamp'),

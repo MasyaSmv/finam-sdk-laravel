@@ -10,7 +10,7 @@ final class UsageQuotaDto
         private string $name,
         private string $limit,
         private string $remaining,
-        private string $resetTime,
+        private ?string $resetTime,
     ) {
     }
 
@@ -29,7 +29,7 @@ final class UsageQuotaDto
         return $this->remaining;
     }
 
-    public function resetTime(): string
+    public function resetTime(): ?string
     {
         return $this->resetTime;
     }
