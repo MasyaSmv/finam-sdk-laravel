@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MasyaSmv\FinamSdk\Tests;
 
+use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use MasyaSmv\FinamSdk\Client\FinamClient;
 use MasyaSmv\FinamSdk\Contracts\AuthServiceInterface;
 use MasyaSmv\FinamSdk\Contracts\FinamManagerInterface;
@@ -11,6 +12,7 @@ use MasyaSmv\FinamSdk\Contracts\FinamSessionInterface;
 use MasyaSmv\FinamSdk\Client\FinamClientFactory;
 use MasyaSmv\FinamSdk\Dto\Config\FinamConfig;
 use MasyaSmv\FinamSdk\Facades\Finam;
+use MasyaSmv\FinamSdk\FinamSdkServiceProvider;
 
 /**
  * Проверяем, что провайдер:
@@ -80,6 +82,31 @@ final class ServiceProviderTest extends TestCase
         $this->assertSame('finam-sdk-tests', $config->http()->userAgent());
     }
 
+    public function test_typed_config_uses_defaults_for_invalid_scalar_shapes(): void
+    {
+        $this->app->forgetInstance(FinamConfig::class);
+        /** @var ConfigRepository $config */
+        $config = $this->app['config'];
+        $config->set('finam.base_url', ['bad']);
+        $config->set('finam.http', [
+            'timeout' => ['bad'],
+            'connect_timeout' => ['bad'],
+            'retries' => ['bad'],
+            'retry_delay_ms' => ['bad'],
+            'user_agent' => ['bad'],
+        ]);
+
+        /** @var FinamConfig $config */
+        $config = $this->app->make(FinamConfig::class);
+
+        $this->assertSame(FinamClient::DEFAULT_BASE_URL, $config->baseUrl());
+        $this->assertSame(10.0, $config->http()->timeout());
+        $this->assertSame(5.0, $config->http()->connectTimeout());
+        $this->assertSame(0, $config->http()->retries());
+        $this->assertSame(200, $config->http()->retryDelayMs());
+        $this->assertSame('finam-sdk-laravel', $config->http()->userAgent());
+    }
+
     public function test_facade_connect_returns_session(): void
     {
         $session = Finam::connect('runtime-token');
@@ -93,5 +120,22 @@ final class ServiceProviderTest extends TestCase
 
         $this->assertInstanceOf(FinamClient::class, $client);
         $this->assertSame('runtime-token', $client->getAccessToken());
+    }
+
+    public function test_provider_boot_registers_publish_path_and_declares_provides(): void
+    {
+        $provider = new FinamSdkServiceProvider($this->app);
+        $provider->boot();
+
+        $this->assertSame([
+            FinamConfig::class,
+            FinamClientFactory::class,
+            AuthServiceInterface::class,
+            FinamManagerInterface::class,
+            'finam',
+        ], $provider->provides());
+
+        $paths = FinamSdkServiceProvider::pathsToPublish(FinamSdkServiceProvider::class, 'finam-config');
+        $this->assertContains($this->app->configPath('finam.php'), $paths);
     }
 }
