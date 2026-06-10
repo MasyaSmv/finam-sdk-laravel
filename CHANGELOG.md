@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## v1.2.0 - 2026-06-10
 - Retried transient HTTP responses (`429`, `503`) in `FinamClient`, not only Guzzle transport errors, honoring the `Retry-After` header when present
 - Added `retry_multiplier` HTTP config option for exponential backoff (`retry_delay_ms * retry_multiplier^(n-1)`); defaults to `1.0` for backward-compatible fixed delay
 
