@@ -65,6 +65,7 @@ abstract class TestCase extends Orchestra
         $config->set('finam.http.connect_timeout', 1.0);
         $config->set('finam.http.retries', 1);
         $config->set('finam.http.retry_delay_ms', 10);
+        $config->set('finam.http.retry_multiplier', 2.0);
         $config->set('finam.http.user_agent', 'finam-sdk-tests');
     }
 

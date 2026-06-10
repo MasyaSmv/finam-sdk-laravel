@@ -12,6 +12,7 @@ final class FinamHttpConfig
         private int $retries,
         private int $retryDelayMs,
         private string $userAgent,
+        private float $retryMultiplier = 1.0,
     ) {
     }
 
@@ -38,5 +39,14 @@ final class FinamHttpConfig
     public function userAgent(): string
     {
         return $this->userAgent;
+    }
+
+    /**
+     * Множитель экспоненциальной задержки между повторами (delay *= multiplier^n).
+     * Значение 1.0 даёт линейную (фиксированную) задержку.
+     */
+    public function retryMultiplier(): float
+    {
+        return $this->retryMultiplier;
     }
 }

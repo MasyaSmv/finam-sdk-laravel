@@ -38,6 +38,7 @@ final class FinamSdkServiceProvider extends ServiceProvider implements Deferrabl
                     retries: $this->intConfig($http, 'retries', 0),
                     retryDelayMs: $this->intConfig($http, 'retry_delay_ms', 200),
                     userAgent: $this->stringConfig($http, 'user_agent', 'finam-sdk-laravel'),
+                    retryMultiplier: $this->floatConfig($http, 'retry_multiplier', 1.0),
                 ),
             );
         });

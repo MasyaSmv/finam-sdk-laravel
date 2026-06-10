@@ -115,6 +115,90 @@ final class ClientCoverageTest extends TestCase
         $client->get('/retry');
     }
 
+    public function testClientRetriesOnTooManyRequestsThenSucceeds(): void
+    {
+        $history = [];
+        $client = $this->makeClientWithQueue([
+            new Response(429, ['Retry-After' => '0'], '{"message":"slow down"}'),
+            new Response(200, [], '{"ok":true}'),
+        ], $history);
+
+        $this->setRetryConfig($client, retries: 2, retryDelayMs: 0, retryMultiplier: 2.0);
+
+        $response = $client->get('/rate-limited');
+
+        $this->assertTrue($response->ok());
+        $this->assertSame(['ok' => true], $response->data()?->toArray());
+        $this->assertCount(2, $history);
+    }
+
+    public function testClientRetriesOnServiceUnavailableThenSucceeds(): void
+    {
+        $history = [];
+        $client = $this->makeClientWithQueue([
+            new Response(503, [], '{"message":"unavailable"}'),
+            new Response(503, [], '{"message":"unavailable"}'),
+            new Response(200, [], '{"ok":true}'),
+        ], $history);
+
+        $this->setRetryConfig($client, retries: 3, retryDelayMs: 0, retryMultiplier: 2.0);
+
+        $response = $client->get('/down');
+
+        $this->assertTrue($response->ok());
+        $this->assertCount(3, $history);
+    }
+
+    public function testClientReturnsRetryableErrorWhenAttemptsExhausted(): void
+    {
+        $history = [];
+        $client = $this->makeClientWithQueue([
+            new Response(503, [], '{"message":"unavailable"}'),
+            new Response(503, [], '{"message":"unavailable"}'),
+        ], $history);
+
+        $this->setRetryConfig($client, retries: 1, retryDelayMs: 0, retryMultiplier: 2.0);
+
+        $response = $client->get('/down');
+
+        $this->assertFalse($response->ok());
+        $this->assertSame(503, $response->status());
+        $this->assertCount(2, $history);
+    }
+
+    public function testClientDoesNotRetryNonRetryableServerError(): void
+    {
+        $history = [];
+        $client = $this->makeClientWithQueue([
+            new Response(500, [], '{"message":"boom"}'),
+            new Response(200, [], '{"ok":true}'),
+        ], $history);
+
+        $this->setRetryConfig($client, retries: 3, retryDelayMs: 0, retryMultiplier: 2.0);
+
+        $response = $client->get('/boom');
+
+        $this->assertFalse($response->ok());
+        $this->assertSame(500, $response->status());
+        $this->assertCount(1, $history);
+    }
+
+    public function testClientHonorsRetryAfterHttpDateHeaderOnRetry(): void
+    {
+        $history = [];
+        $client = $this->makeClientWithQueue([
+            new Response(429, ['Retry-After' => gmdate('D, d M Y H:i:s \G\M\T', time() - 10)], '{}'),
+            new Response(200, [], '{"ok":true}'),
+        ], $history);
+
+        $this->setRetryConfig($client, retries: 2, retryDelayMs: 0, retryMultiplier: 2.0);
+
+        $response = $client->get('/rate-limited');
+
+        $this->assertTrue($response->ok());
+        $this->assertCount(2, $history);
+    }
+
     public function testClientOmitsAuthorizationHeaderWhenCustomProviderReturnsEmptyString(): void
     {
         $history = [];
@@ -219,5 +303,33 @@ final class ClientCoverageTest extends TestCase
     {
         $this->expectException(\MasyaSmv\FinamSdk\Exceptions\TokenNotConfiguredException::class);
         (new StaticTokenProvider(''))->getToken();
+    }
+
+    public function testHttpConfigExposesRetryMultiplierWithBackwardCompatibleDefault(): void
+    {
+        $withMultiplier = new FinamHttpConfig(3.0, 1.0, 2, 5, 'ua', 2.5);
+        $withoutMultiplier = new FinamHttpConfig(3.0, 1.0, 2, 5, 'ua');
+
+        $this->assertSame(2.5, $withMultiplier->retryMultiplier());
+        $this->assertSame(1.0, $withoutMultiplier->retryMultiplier());
+    }
+
+    private function setRetryConfig(
+        FinamClient $client,
+        int $retries,
+        int $retryDelayMs,
+        float $retryMultiplier,
+    ): void {
+        $reflection = new \ReflectionClass(FinamClient::class);
+
+        foreach ([
+            'retries' => $retries,
+            'retryDelayMs' => $retryDelayMs,
+            'retryMultiplier' => $retryMultiplier,
+        ] as $propertyName => $value) {
+            $property = $reflection->getProperty($propertyName);
+            $property->setAccessible(true);
+            $property->setValue($client, $value);
+        }
     }
 }

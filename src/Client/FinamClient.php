@@ -26,10 +26,19 @@ use MasyaSmv\FinamSdk\Dto\Transport\ApiRequestContext;
 use MasyaSmv\FinamSdk\Dto\Transport\ApiResponse;
 use MasyaSmv\FinamSdk\Exceptions\ApiRequestFailedException;
 use MasyaSmv\FinamSdk\Exceptions\InvalidResponseException;
+use Psr\Http\Message\ResponseInterface;
 
 final class FinamClient
 {
     public const DEFAULT_BASE_URL = 'https://tradeapi.finam.ru/v1/';
+
+    /**
+     * HTTP-статусы, которые считаем временными и повторяем при наличии попыток.
+     * 429 — rate-limit, 503 — сервис недоступен.
+     *
+     * @var list<int>
+     */
+    private const RETRYABLE_STATUSES = [429, 503];
 
     private Guzzle $http;
 
@@ -44,6 +53,7 @@ final class FinamClient
         private int $retries = 0,
         private int $retryDelayMs = 200,
         private string $userAgent = 'finam-sdk-laravel',
+        private float $retryMultiplier = 1.0,
     ) {
         $this->tokenProvider = is_string($tokenProvider)
             ? new StaticTokenProvider($tokenProvider)
@@ -169,6 +179,16 @@ final class FinamClient
                 $response = $this->http->request($method, $uri, $options);
 
                 $status = $response->getStatusCode();
+
+                // Временные статусы (429/503) повторяем с экспоненциальной паузой,
+                // уважая Retry-After, пока остаются попытки. Иначе — отдаём
+                // нормализованную ошибку ниже (без вечного цикла).
+                if (in_array($status, self::RETRYABLE_STATUSES, true) && $attempt < $maxAttempts) {
+                    $this->sleepBeforeRetry($attempt, $this->retryAfterMicroseconds($response));
+
+                    continue;
+                }
+
                 $headers = $response->getHeaders();
 
                 $body = (string)$response->getBody();
@@ -242,11 +262,65 @@ final class FinamClient
                     );
                 }
 
-                $sleepMicroseconds = max(0, $this->retryDelayMs) * 1000;
-
-                usleep($sleepMicroseconds);
+                $this->sleepBeforeRetry($attempt, null);
             }
         }
+    }
+
+    /**
+     * Пауза перед повтором: либо Retry-After (если сервер прислал), либо
+     * экспоненциальный backoff на базе retryDelayMs и retryMultiplier.
+     */
+    private function sleepBeforeRetry(int $attempt, ?int $retryAfterMicroseconds): void
+    {
+        $sleepMicroseconds = $retryAfterMicroseconds ?? $this->backoffMicroseconds($attempt);
+
+        if ($sleepMicroseconds > 0) {
+            usleep($sleepMicroseconds);
+        }
+    }
+
+    /**
+     * Экспоненциальная задержка: retryDelayMs * multiplier^(attempt-1), в микросекундах.
+     */
+    private function backoffMicroseconds(int $attempt): int
+    {
+        $baseMs = max(0, $this->retryDelayMs);
+        $multiplier = $this->retryMultiplier > 0 ? $this->retryMultiplier : 1.0;
+        $delayMs = (int) round($baseMs * ($multiplier ** max(0, $attempt - 1)));
+
+        return $delayMs * 1000;
+    }
+
+    /**
+     * Парсинг заголовка Retry-After (delta-seconds или HTTP-date) в микросекунды.
+     * Возвращает null, если заголовок отсутствует/непарсится — тогда работает backoff.
+     */
+    private function retryAfterMicroseconds(ResponseInterface $response): ?int
+    {
+        if (!$response->hasHeader('Retry-After')) {
+            return null;
+        }
+
+        $value = trim($response->getHeaderLine('Retry-After'));
+
+        if ($value === '') {
+            return null;
+        }
+
+        if (ctype_digit($value)) {
+            return (int) $value * 1_000_000;
+        }
+
+        $timestamp = strtotime($value);
+
+        if ($timestamp === false) {
+            return null;
+        }
+
+        $deltaSeconds = $timestamp - time();
+
+        return $deltaSeconds > 0 ? $deltaSeconds * 1_000_000 : 0;
     }
 
     /**

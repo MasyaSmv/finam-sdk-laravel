@@ -81,6 +81,7 @@ final class ServiceProviderTest extends TestCase
         $this->assertSame(1.0, $config->http()->connectTimeout());
         $this->assertSame(1, $config->http()->retries());
         $this->assertSame(10, $config->http()->retryDelayMs());
+        $this->assertSame(2.0, $config->http()->retryMultiplier());
         $this->assertSame('finam-sdk-tests', $config->http()->userAgent());
     }
 
@@ -95,6 +96,7 @@ final class ServiceProviderTest extends TestCase
             'connect_timeout' => ['bad'],
             'retries' => ['bad'],
             'retry_delay_ms' => ['bad'],
+            'retry_multiplier' => ['bad'],
             'user_agent' => ['bad'],
         ]);
 
@@ -106,6 +108,7 @@ final class ServiceProviderTest extends TestCase
         $this->assertSame(5.0, $config->http()->connectTimeout());
         $this->assertSame(0, $config->http()->retries());
         $this->assertSame(200, $config->http()->retryDelayMs());
+        $this->assertSame(1.0, $config->http()->retryMultiplier());
         $this->assertSame('finam-sdk-laravel', $config->http()->userAgent());
     }
 

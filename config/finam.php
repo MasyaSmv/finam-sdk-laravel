@@ -21,8 +21,10 @@ return [
     | Настройки транспорта:
     |  - timeout: общий таймаут запроса
     |  - connect_timeout: таймаут установки соединения
-    |  - retries: количество повторов при временных сетевых сбоях
-    |  - retry_delay_ms: задержка между повторами (мс)
+    |  - retries: количество повторов при временных сбоях (сетевые ошибки + HTTP 429/503)
+    |  - retry_delay_ms: базовая задержка между повторами (мс)
+    |  - retry_multiplier: множитель экспоненциального backoff (delay *= multiplier^n);
+    |                      1.0 = фиксированная задержка. Retry-After от сервера имеет приоритет.
     |  - user_agent: полезно для логов провайдера API
     |
     */
@@ -32,6 +34,7 @@ return [
 
         'retries' => 0,
         'retry_delay_ms' => 200,
+        'retry_multiplier' => 2.0,
 
         'user_agent' => 'finam-sdk-laravel',
     ],

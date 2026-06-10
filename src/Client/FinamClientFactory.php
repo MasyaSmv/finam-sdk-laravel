@@ -37,6 +37,7 @@ final class FinamClientFactory
             retries: $httpConfig->retries(),
             retryDelayMs: $httpConfig->retryDelayMs(),
             userAgent: $httpConfig->userAgent(),
+            retryMultiplier: $httpConfig->retryMultiplier(),
         );
     }
 }
